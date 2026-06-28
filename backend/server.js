@@ -3,6 +3,8 @@ import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
+import authRouter from './routes/auth.js';
+import profileRouter from './routes/profile.js';
 
 export const app = express();
 
@@ -15,9 +17,9 @@ app.use(
 
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 
-// Routes are registered here as epics land:
-// app.use('/api/auth', authRouter);
-// app.use('/api/profile', profileRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/profile', profileRouter);
+// Registered as epics land:
 // app.use('/api/matches', matchesRouter);
 // app.use('/api/stats', statsRouter);
 // app.use('/api/badges', badgesRouter);
