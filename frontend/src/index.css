@@ -1,0 +1,152 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Source+Sans+3:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   GlobalVBC hybrid design tokens
+   Foundation: LocalSportsClub gold/amber + warm cream surfaces.
+   Hybrid:     electric-blue accent for CTAs/progress; violet tertiary.
+   Dark mode is the default; .light overrides for light mode.
+   ============================================================ */
+
+:root {
+  /* Brand (gold/amber) — reserved for ratings & badges */
+  --brand-50: 253 248 239;
+  --brand-100: 249 237 207;
+  --brand-200: 242 216 158;
+  --brand-300: 232 192 106;
+  --brand-400: 212 162 62;
+  --brand-500: 192 138 34;
+  --brand-600: 160 112 26;
+  --brand-700: 128 88 24;
+  --brand-800: 90 64 32;
+  --brand-900: 58 40 16;
+  --brand-950: 26 20 16;
+
+  /* Accent (electric blue) — primary CTAs, progress, energy */
+  --accent-400: 96 165 250;
+  --accent-500: 37 99 235;
+  --accent-600: 29 78 216;
+
+  /* Tertiary (violet) — sparingly */
+  --violet-400: 167 139 250;
+  --violet-500: 139 92 246;
+  --violet-600: 124 58 237;
+
+  /* Surfaces (dark default) */
+  --surface-0: 18 16 16;
+  --surface-50: 26 22 20;
+  --surface-100: 30 26 22;
+  --surface-200: 42 37 32;
+  --surface-300: 58 53 48;
+  --surface-400: 74 66 56;
+  --surface-500: 107 97 85;
+  --surface-600: 138 126 107;
+  --surface-700: 168 152 128;
+  --surface-800: 196 181 160;
+  --surface-900: 245 240 232;
+
+  --bg-page: var(--surface-0);
+  --bg-card: var(--surface-100);
+  --bg-surface: var(--surface-50);
+  --bg-elevated: var(--surface-200);
+
+  --text-primary: var(--surface-900);
+  --text-secondary: var(--surface-800);
+  --text-muted: var(--surface-600);
+  --text-inverse: var(--brand-950);
+
+  --border-default: var(--surface-200);
+  --border-strong: var(--surface-300);
+
+  --action-primary: var(--accent-500);
+  --action-primary-hover: var(--accent-400);
+
+  --status-success: 74 222 128;
+  --status-warning: 251 191 36;
+  --status-active: 96 165 250;
+  --status-danger: 248 113 113;
+}
+
+.light {
+  --brand-50: 26 20 16;
+  --brand-100: 58 40 16;
+  --brand-200: 90 64 32;
+  --brand-300: 128 88 24;
+  --brand-400: 160 112 26;
+  --brand-500: 192 138 34;
+  --brand-600: 212 162 62;
+  --brand-700: 232 192 106;
+  --brand-800: 242 216 158;
+  --brand-900: 249 237 207;
+  --brand-950: 253 248 239;
+
+  --accent-400: 29 78 216;
+  --accent-500: 37 99 235;
+  --accent-600: 96 165 250;
+
+  --violet-400: 124 58 237;
+  --violet-500: 139 92 246;
+  --violet-600: 167 139 250;
+
+  --surface-0: 250 248 245;
+  --surface-50: 245 240 232;
+  --surface-100: 239 233 223;
+  --surface-200: 224 216 204;
+  --surface-300: 207 197 181;
+  --surface-400: 168 152 128;
+  --surface-500: 138 126 107;
+  --surface-600: 107 97 85;
+  --surface-700: 74 66 56;
+  --surface-800: 42 37 32;
+  --surface-900: 26 22 20;
+
+  --bg-page: var(--surface-0);
+  --bg-card: var(--surface-100);
+  --bg-surface: var(--surface-50);
+  --bg-elevated: var(--surface-200);
+
+  --text-primary: var(--surface-900);
+  --text-secondary: var(--surface-700);
+  --text-muted: var(--surface-600);
+  --text-inverse: var(--brand-950);
+
+  --border-default: var(--surface-200);
+  --border-strong: var(--surface-300);
+
+  --action-primary: var(--accent-500);
+  --action-primary-hover: var(--accent-600);
+
+  --status-success: 22 101 52;
+  --status-warning: 146 64 14;
+  --status-active: 29 78 216;
+  --status-danger: 185 28 28;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: rgb(var(--bg-page));
+  color: rgb(var(--text-primary));
+  font-family: 'Source Sans 3', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+.font-display {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+:focus-visible {
+  outline: 2px solid rgb(var(--accent-500));
+  outline-offset: 2px;
+}
