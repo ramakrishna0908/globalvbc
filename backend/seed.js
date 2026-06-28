@@ -70,6 +70,8 @@ async function run() {
         result,
         score_for: result === 'won' ? winScore : loseScore,
         score_against: result === 'won' ? loseScore : winScore,
+        // Strong opponents so wins are worth more — top players reach ~1600–1800.
+        opponent_elo: 1450 + Math.floor(rand() * 200),
         is_mvp: m < p.mvp,
       });
     }
