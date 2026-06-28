@@ -12,6 +12,46 @@ export async function getOwnProfile(userId) {
   return rows[0];
 }
 
+async function enrich(profile) {
+  // win rate + matches
+  const { rows: mc } = await query(
+    `SELECT COUNT(*)::int AS played,
+            COUNT(*) FILTER (WHERE result = 'won')::int AS wins
+     FROM matches WHERE user_id = $1`,
+    [profile.id]
+  );
+  const played = mc[0]?.played ?? 0;
+  const wins = mc[0]?.wins ?? 0;
+
+  // local rank within community (or global if no community)
+  const rankParams = [profile.elo];
+  let rankWhere = 'elo > $1';
+  if (profile.community_id) {
+    rankParams.push(profile.community_id);
+    rankWhere += ` AND community_id = $2`;
+  }
+  const { rows: rk } = await query(
+    `SELECT COUNT(*)::int AS ahead FROM users WHERE ${rankWhere}`,
+    rankParams
+  );
+
+  // earned badges
+  const { rows: badges } = await query(
+    `SELECT b.key, b.name, b.icon FROM user_badges ub
+     JOIN badges b ON b.id = ub.badge_id
+     WHERE ub.user_id = $1 ORDER BY ub.earned_at`,
+    [profile.id]
+  );
+
+  return {
+    ...profile,
+    matches_played: played,
+    win_rate: played ? Math.round((wins / played) * 100) : 0,
+    rank: (rk[0]?.ahead ?? 0) + 1,
+    badges,
+  };
+}
+
 export async function getPublicProfile(id) {
   // 'sample' (or any non-numeric id) resolves to the top-rated player, so the
   // landing page's "View Sample Profile" always points at a rich profile.
@@ -20,11 +60,11 @@ export async function getPublicProfile(id) {
       `SELECT ${SHARE_FIELDS} FROM users ORDER BY elo DESC, id ASC LIMIT 1`
     );
     if (!rows[0]) throw new HttpError(404, 'No profiles yet');
-    return rows[0];
+    return enrich(rows[0]);
   }
   const { rows } = await query(`SELECT ${SHARE_FIELDS} FROM users WHERE id = $1`, [id]);
   if (!rows[0]) throw new HttpError(404, 'Profile not found');
-  return rows[0];
+  return enrich(rows[0]);
 }
 
 export async function updateProfile(userId, body) {
