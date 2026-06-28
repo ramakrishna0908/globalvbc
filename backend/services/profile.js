@@ -13,6 +13,15 @@ export async function getOwnProfile(userId) {
 }
 
 export async function getPublicProfile(id) {
+  // 'sample' (or any non-numeric id) resolves to the top-rated player, so the
+  // landing page's "View Sample Profile" always points at a rich profile.
+  if (!/^\d+$/.test(String(id))) {
+    const { rows } = await query(
+      `SELECT ${SHARE_FIELDS} FROM users ORDER BY elo DESC, id ASC LIMIT 1`
+    );
+    if (!rows[0]) throw new HttpError(404, 'No profiles yet');
+    return rows[0];
+  }
   const { rows } = await query(`SELECT ${SHARE_FIELDS} FROM users WHERE id = $1`, [id]);
   if (!rows[0]) throw new HttpError(404, 'Profile not found');
   return rows[0];
