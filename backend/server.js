@@ -5,6 +5,7 @@ import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import authRouter from './routes/auth.js';
 import profileRouter from './routes/profile.js';
+import matchesRouter from './routes/matches.js';
 
 export const app = express();
 
@@ -19,8 +20,8 @@ app.get('/api/health', (_req, res) => res.json({ ok: true }));
 
 app.use('/api/auth', authRouter);
 app.use('/api/profile', profileRouter);
+app.use('/api/matches', matchesRouter);
 // Registered as epics land:
-// app.use('/api/matches', matchesRouter);
 // app.use('/api/stats', statsRouter);
 // app.use('/api/badges', badgesRouter);
 // app.use('/api/leaderboard', leaderboardRouter);
