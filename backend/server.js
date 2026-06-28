@@ -38,6 +38,8 @@ app.use((err, _req, res, _next) => {
 });
 
 const PORT = process.env.PORT || 4000;
-if (process.env.NODE_ENV !== 'test') {
+// Only run a long-lived listener for local/standalone Node. On Vercel the app is
+// imported by the serverless function in /api and must not call listen().
+if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
   app.listen(PORT, () => console.log(`GlobalVBC API on :${PORT}`));
 }
