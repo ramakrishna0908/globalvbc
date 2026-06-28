@@ -8,6 +8,8 @@ import profileRouter from './routes/profile.js';
 import matchesRouter from './routes/matches.js';
 import statsRouter from './routes/stats.js';
 import badgesRouter from './routes/badges.js';
+import leaderboardRouter from './routes/leaderboard.js';
+import communitiesRouter from './routes/communities.js';
 
 export const app = express();
 
@@ -25,9 +27,8 @@ app.use('/api/profile', profileRouter);
 app.use('/api/matches', matchesRouter);
 app.use('/api/stats', statsRouter);
 app.use('/api/badges', badgesRouter);
-// Registered as epics land:
-// app.use('/api/leaderboard', leaderboardRouter);
-// app.use('/api/communities', communitiesRouter);
+app.use('/api/leaderboard', leaderboardRouter);
+app.use('/api/communities', communitiesRouter);
 
 // Centralized error handler
 // eslint-disable-next-line no-unused-vars
