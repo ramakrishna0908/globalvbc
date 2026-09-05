@@ -1,7 +1,7 @@
 {
   "name": "globalvbc-backend",
   "version": "1.0.0",
-  "description": "GlobalVBC API — Express + PostgreSQL",
+  "description": "GlobalVBC API \u2014 Express + PostgreSQL",
   "type": "module",
   "main": "server.js",
   "scripts": {
@@ -10,7 +10,8 @@
     "db:migrate": "node migrate.js",
     "seed": "node seed.js",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "admin": "node scripts/create-admin.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
