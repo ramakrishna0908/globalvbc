@@ -1,22 +1,43 @@
-export function LoadingBlock({ label = 'Loading…' }) {
+import Alert from './Alert.jsx';
+import Button from '../Button.jsx';
+import { SkeletonCards, SkeletonTable, SkeletonText } from './Skeleton.jsx';
+
+/**
+ * Loading state. `variant` renders a shape-matched skeleton (cards / table /
+ * text); the default is a compact spinner. Always announced via role=status.
+ */
+export function LoadingBlock({ label = 'Loading…', variant = 'spinner', count = 3 }) {
+  if (variant !== 'spinner') {
+    return (
+      <div role="status" aria-busy="true">
+        <span className="sr-only">{label}</span>
+        {variant === 'table' ? <SkeletonTable rows={count} /> : variant === 'text' ? <SkeletonText lines={count} /> : <SkeletonCards count={count} />}
+      </div>
+    );
+  }
   return (
-    <div role="status" className="py-16 text-center text-text-muted">
-      <span className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-border-strong border-t-accent-500 align-middle" aria-hidden="true" />
-      <span className="ml-3 align-middle">{label}</span>
+    <div role="status" aria-busy="true" className="flex items-center justify-center gap-3 py-16 text-sm font-semibold text-text-muted">
+      <span className="inline-block h-6 w-6 animate-spin rounded-full border-[3px] border-border-strong border-t-accent-500" aria-hidden="true" />
+      <span>{label}</span>
     </div>
   );
 }
 
-export function ErrorBlock({ error, retry }) {
+export function ErrorBlock({ error, retry, title }) {
   const message = error?.response?.data?.error || error?.message || 'Something went wrong';
   return (
-    <div role="alert" className="rounded-xl border border-status-danger/50 bg-status-danger/10 p-4 text-sm">
-      <p className="font-semibold text-text-primary">{message}</p>
-      {retry ? (
-        <button type="button" onClick={retry} className="mt-2 min-h-[44px] rounded-lg border border-border-strong px-3 font-semibold hover:bg-bg-elevated">
-          Try again
-        </button>
-      ) : null}
-    </div>
+    <Alert
+      tone="danger"
+      title={title || message}
+      action={
+        retry ? (
+          <Button variant="secondary" size="sm" onClick={retry}>
+            Try again
+          </Button>
+        ) : null
+      }
+    >
+      {title ? message : null}
+    </Alert>
   );
 }

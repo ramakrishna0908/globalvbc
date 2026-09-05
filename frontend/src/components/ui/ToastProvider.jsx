@@ -1,17 +1,18 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
+import Icon from './Icon.jsx';
 
 const ToastContext = createContext(null);
 
 const TONES = {
-  success: 'border-status-success/40 bg-status-success/15 text-text-primary',
-  error: 'border-status-danger/50 bg-status-danger/15 text-text-primary',
-  info: 'border-accent-500/40 bg-accent-500/15 text-text-primary',
-  warning: 'border-status-warning/50 bg-status-warning/15 text-text-primary',
+  success: { cls: 'border-status-success/40 bg-bg-card', icon: 'check', iconCls: 'bg-status-success/20 text-status-success' },
+  error: { cls: 'border-status-danger/50 bg-bg-card', icon: 'alert', iconCls: 'bg-status-danger/20 text-status-danger' },
+  info: { cls: 'border-accent-500/40 bg-bg-card', icon: 'info', iconCls: 'bg-accent-500/20 text-accent-400' },
+  warning: { cls: 'border-status-warning/50 bg-bg-card', icon: 'alert', iconCls: 'bg-status-warning/20 text-status-warning' },
 };
 
 /**
- * Non-blocking toasts. `toast(message, { tone, duration })`. Announced via
- * aria-live=polite; never steals focus, never requires dismissal.
+ * Non-blocking toasts. `toast(message, { tone, duration, icon })`. Announced
+ * via aria-live=polite; never steals focus, never requires dismissal.
  */
 export function ToastProvider({ children }) {
   const [items, setItems] = useState([]);
@@ -35,16 +36,17 @@ export function ToastProvider({ children }) {
     <ToastContext.Provider value={value}>
       {children}
       <div aria-live="polite" aria-atomic="false" className="pointer-events-none fixed inset-x-0 top-3 z-[100] flex flex-col items-center gap-2 px-4 sm:top-4">
-        {items.map((t) => (
-          <div
-            key={t.id}
-            role="status"
-            className={`pointer-events-auto flex max-w-md items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold shadow-elevated backdrop-blur motion-safe:animate-toast-in ${TONES[t.tone] || TONES.info}`}
-          >
-            {t.icon ? <span aria-hidden="true">{t.icon}</span> : null}
-            <span>{t.message}</span>
-          </div>
-        ))}
+        {items.map((t) => {
+          const tone = TONES[t.tone] || TONES.info;
+          return (
+            <div key={t.id} role="status" className={`pointer-events-auto flex max-w-md items-center gap-3 rounded-lg border px-3.5 py-2.5 text-sm font-semibold text-text-primary shadow-elevated motion-safe:animate-toast-in ${tone.cls}`}>
+              <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${tone.iconCls}`} aria-hidden="true">
+                {t.icon ? <span className="text-sm">{t.icon}</span> : <Icon name={tone.icon} size={16} />}
+              </span>
+              <span>{t.message}</span>
+            </div>
+          );
+        })}
       </div>
     </ToastContext.Provider>
   );

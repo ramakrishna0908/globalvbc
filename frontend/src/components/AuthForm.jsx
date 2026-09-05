@@ -5,13 +5,16 @@ import AppHeader from './AppHeader.jsx';
 import Card from './Card.jsx';
 import Button from './Button.jsx';
 import Field from './ui/Field.jsx';
+import Alert from './ui/Alert.jsx';
+import Icon from './ui/Icon.jsx';
+import { BallMark } from './ui/Logo.jsx';
 
 /** Self-service roles. Admin is granted by an existing admin, never picked here. */
 export const ROLE_OPTIONS = [
-  { key: 'player', icon: '🏐', label: 'Player', copy: 'Build your profile, stats and rating from scored matches.' },
-  { key: 'scorer', icon: '📋', label: 'Scorer', copy: 'Score matches rally-by-rally from the table.' },
-  { key: 'coach', icon: '🧠', label: 'Coach', copy: 'Manage rosters and read the boxscores.' },
-  { key: 'organizer', icon: '🏆', label: 'Organizer', copy: 'Run tournaments: pools, brackets, courts.' },
+  { key: 'player', icon: 'ball', label: 'Player', copy: 'Build your profile, stats and rating from scored matches.' },
+  { key: 'scorer', icon: 'whistle', label: 'Scorer', copy: 'Score matches rally-by-rally from the table.' },
+  { key: 'coach', icon: 'users', label: 'Coach', copy: 'Manage rosters and read the boxscores.' },
+  { key: 'organizer', icon: 'trophy', label: 'Organizer', copy: 'Run tournaments: pools, brackets, courts.' },
 ];
 const ROLE_KEYS = ROLE_OPTIONS.map((r) => r.key);
 
@@ -60,15 +63,13 @@ function RolePicker({ value, onChange }) {
               aria-pressed={selected}
               onClick={() => onChange(r.key)}
               data-testid={`role-${r.key}`}
-              className={`flex min-h-[56px] items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors ${
-                selected ? 'border-accent-500 bg-accent-500/10 ring-2 ring-accent-500/30' : 'border-border-default bg-bg-surface hover:border-border-strong hover:bg-bg-elevated'
-              }`}
+              className={`flex min-h-14 items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors ${selected ? 'border-accent-500 bg-accent-500/10 ring-2 ring-accent-500/30' : 'border-border-default bg-bg-surface hover:border-border-strong hover:bg-bg-elevated'}`}
             >
-              <span className="text-2xl" aria-hidden="true">
-                {r.icon}
+              <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${selected ? 'bg-accent-500 text-white' : 'bg-bg-elevated text-text-secondary'}`} aria-hidden="true">
+                <Icon name={r.icon} size={20} />
               </span>
               <span className="min-w-0">
-                <span className={`block text-sm font-bold ${selected ? 'text-accent-400' : 'text-text-primary'}`}>{r.label}</span>
+                <span className={`block font-display text-base font-bold uppercase tracking-wide ${selected ? 'text-accent-400' : 'text-text-primary'}`}>{r.label}</span>
                 <span className="block text-xs leading-snug text-text-muted">{r.copy}</span>
               </span>
             </button>
@@ -121,60 +122,47 @@ export default function AuthForm({ mode }) {
   return (
     <>
       <AppHeader />
-      <main className="mx-auto max-w-lg px-4 py-10 md:py-12">
+      <main id="main" className="relative mx-auto max-w-lg px-4 py-10 md:py-14">
+        <div className="court-lines pointer-events-none absolute inset-0 -z-10" aria-hidden="true" />
         <Card className="p-6 md:p-8">
-          <h1 className="font-display text-2xl font-bold">{isRegister ? 'Create your account' : 'Sign in'}</h1>
-          <p className="mt-1 text-sm text-text-secondary">
-            {isRegister ? 'Score matches, run tournaments, or build your player identity.' : 'Welcome back to GlobalVBC.'}
-          </p>
+          <BallMark size={36} />
+          <h1 className="mt-3 font-display text-display-sm font-bold uppercase">{isRegister ? 'Create your account' : 'Sign in'}</h1>
+          <p className="mt-1 text-sm text-text-secondary">{isRegister ? 'Score matches, run tournaments, or build your player identity.' : 'Welcome back to GlobalVBC.'}</p>
 
           <form className="mt-6 space-y-4" onSubmit={onSubmit} noValidate={false}>
             {isRegister ? <RolePicker value={form.role} onChange={(role) => setForm((f) => ({ ...f, role }))} /> : null}
 
             {isRegister ? <Field label="Name" value={form.name} onChange={set('name')} autoComplete="name" required /> : null}
-            <Field label="Email" type="email" value={form.email} onChange={set('email')} autoComplete="email" required />
-            <Field
-              label="Password"
-              type="password"
-              value={form.password}
-              onChange={set('password')}
-              minLength={8}
-              autoComplete={isRegister ? 'new-password' : 'current-password'}
-              hint={isRegister ? 'At least 8 characters.' : undefined}
-              required
-            />
+            <Field label="Email" type="email" value={form.email} onChange={set('email')} autoComplete="email" inputMode="email" required />
+            <Field label="Password" type="password" value={form.password} onChange={set('password')} minLength={8} autoComplete={isRegister ? 'new-password' : 'current-password'} hint={isRegister ? 'At least 8 characters.' : undefined} required />
 
             {!isRegister ? (
               <div className="text-right text-sm">
-                <Link to="/forgot-password" className="inline-flex min-h-[44px] items-center font-semibold text-accent-400 hover:underline">
+                <Link to="/forgot-password" className="link inline-flex min-h-11 items-center">
                   Forgot password?
                 </Link>
               </div>
             ) : null}
 
-            {error ? (
-              <p role="alert" className="text-sm text-status-danger">
-                {error}
-              </p>
-            ) : null}
+            {error ? <Alert tone="danger">{error}</Alert> : null}
 
-            <Button type="submit" size="lg" className="min-h-[48px] w-full" disabled={busy}>
+            <Button type="submit" size="lg" full disabled={busy}>
               {busy ? 'Please wait…' : isRegister ? `Create ${selectedRole?.label || ''} account` : 'Sign in'}
             </Button>
           </form>
 
-          <p className="mt-4 text-center text-sm text-text-secondary">
+          <p className="mt-5 text-center text-sm text-text-secondary">
             {isRegister ? (
               <>
                 Already have an account?{' '}
-                <Link to="/login" className="font-semibold text-accent-400 hover:underline">
+                <Link to="/login" className="link">
                   Sign in
                 </Link>
               </>
             ) : (
               <>
                 New here?{' '}
-                <Link to="/register" className="font-semibold text-accent-400 hover:underline">
+                <Link to="/register" className="link">
                   Create an account
                 </Link>
               </>

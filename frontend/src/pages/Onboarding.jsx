@@ -3,36 +3,54 @@ import { useNavigate } from 'react-router-dom';
 import AppHeader from '../components/AppHeader.jsx';
 import Card from '../components/Card.jsx';
 import Button from '../components/Button.jsx';
+import Field from '../components/ui/Field.jsx';
+import Icon from '../components/ui/Icon.jsx';
 import RatingBadge from '../components/RatingBadge.jsx';
 import LeaderboardWidget from '../components/dashboard/LeaderboardWidget.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useCommunities, useUpdateProfile, useRecordMatch, useLeaderboard } from '../hooks/queries.js';
 import { POSITION_LABELS, ROLE_LABELS } from '../lib/format.js';
 
-const STEPS = ['Profile', 'Position', 'First Match', 'Rating', 'Rankings', 'Share'];
+const STEPS = ['Profile', 'Position', 'First match', 'Rating', 'Rankings', 'Share'];
 /** Roles a user may pick for themselves (admin is granted by an admin). */
 const SELF_SERVICE_ROLES = ['player', 'scorer', 'coach', 'organizer'];
-const field =
-  'mt-1 w-full min-h-[44px] rounded-lg border border-border-default bg-bg-surface px-3 py-2 text-text-primary focus:border-accent-500';
+const ROLE_HELP = {
+  scorer: 'Scorers run the live scoring panel for matches.',
+  coach: 'Coaches manage teams and rosters.',
+  organizer: 'Organizers create tournaments and schedules.',
+  player: 'Players build a rating from officially scored matches.',
+};
 
-function StepDots({ step }) {
+function Stepper({ step }) {
   return (
-    <div className="mb-6 flex items-center justify-center gap-2">
-      {STEPS.map((label, i) => (
-        <div key={label} className="flex items-center gap-2">
-          <div
-            className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
-              i <= step ? 'bg-accent-500 text-white' : 'bg-bg-elevated text-text-muted'
-            }`}
-          >
-            {i + 1}
-          </div>
-          {i < STEPS.length - 1 && (
-            <div className={`h-0.5 w-4 ${i < step ? 'bg-accent-500' : 'bg-bg-elevated'}`} />
-          )}
-        </div>
-      ))}
-    </div>
+    <ol className="mb-6 flex items-center justify-center gap-1.5" aria-label="Onboarding progress">
+      {STEPS.map((label, i) => {
+        const done = i < step;
+        const current = i === step;
+        return (
+          <li key={label} className="flex items-center gap-1.5">
+            <span
+              className={`flex h-8 w-8 items-center justify-center rounded-full font-display text-sm font-bold ${current ? 'bg-accent-500 text-white ring-4 ring-accent-500/25' : done ? 'bg-status-success/20 text-status-success' : 'bg-bg-elevated text-text-muted'}`}
+              aria-current={current ? 'step' : undefined}
+              aria-label={`Step ${i + 1}: ${label}${done ? ' (done)' : current ? ' (current)' : ''}`}
+            >
+              {done ? <Icon name="check" size={14} /> : i + 1}
+            </span>
+            {i < STEPS.length - 1 ? <span className={`h-0.5 w-4 rounded-full sm:w-6 ${i < step ? 'bg-status-success' : 'bg-bg-elevated'}`} aria-hidden="true" /> : null}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+function StepTitle({ children, copy }) {
+  return (
+    <>
+      <p className="eyebrow">Step {STEPS.indexOf(children) + 1 || ''}</p>
+      <h1 className="mt-1 font-display text-display-sm font-bold uppercase">{children}</h1>
+      {copy ? <p className="mt-1 text-text-secondary">{copy}</p> : null}
+    </>
   );
 }
 
@@ -52,17 +70,10 @@ export default function Onboarding() {
     jersey_number: user?.jersey_number ?? '',
   });
   const [position, setPosition] = useState(user?.position || '');
-  const [match, setMatch] = useState({
-    opponent_name: '',
-    result: 'won',
-    score_for: 21,
-    score_against: 18,
-  });
+  const [match, setMatch] = useState({ opponent_name: '', result: 'won', score_for: 21, score_against: 18 });
   const [rating, setRating] = useState(null);
 
-  const leaderboard = useLeaderboard(
-    user?.community_id ? { community: user.community_id, nearby: 1 } : { nearby: 1 }
-  );
+  const leaderboard = useLeaderboard(user?.community_id ? { community: user.community_id, nearby: 1 } : { nearby: 1 });
 
   const next = () => setStep((s) => Math.min(s + 1, STEPS.length - 1));
 
@@ -98,233 +109,127 @@ export default function Onboarding() {
   return (
     <>
       <AppHeader />
-      <main className="mx-auto max-w-xl px-4 py-10">
-        <StepDots step={step} />
-        <Card className="p-8">
+      <main id="main" className="mx-auto max-w-xl px-4 py-8 md:py-10">
+        <Stepper step={step} />
+        <Card className="p-6 md:p-8">
           {step === 0 && (
             <div>
-              <h1 className="font-display text-2xl font-bold">Create Your Profile</h1>
-              <p className="mt-1 text-text-secondary">Tell the community who you are.</p>
+              <StepTitle copy="Tell the community who you are.">Profile</StepTitle>
               <div className="mt-6 space-y-4">
-                <label className="block text-sm">
-                  <span className="text-text-secondary">Name</span>
-                  <input
-                    className={field}
-                    value={profile.name}
-                    onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                  />
-                </label>
-                <label className="block text-sm">
-                  <span className="text-text-secondary">Photo URL (optional)</span>
-                  <input
-                    className={field}
-                    placeholder="https://…"
-                    value={profile.photo_url}
-                    onChange={(e) => setProfile({ ...profile, photo_url: e.target.value })}
-                  />
-                </label>
+                <Field label="Name" value={profile.name} onChange={(e) => setProfile({ ...profile, name: e.target.value })} autoComplete="name" required />
+                <Field label="Photo URL (optional)" type="url" placeholder="https://…" value={profile.photo_url} onChange={(e) => setProfile({ ...profile, photo_url: e.target.value })} />
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <label className="block text-sm">
-                    <span className="text-text-secondary">I am a…</span>
-                    <select
-                      className={field}
-                      value={profile.role}
-                      onChange={(e) => setProfile({ ...profile, role: e.target.value })}
-                      disabled={user?.role === 'admin'}
-                      data-testid="role-select"
-                    >
-                      {SELF_SERVICE_ROLES.map((r) => (
-                        <option key={r} value={r}>
-                          {ROLE_LABELS[r]}
-                        </option>
-                      ))}
-                    </select>
-                    <span className="mt-1 block text-xs text-text-muted">
-                      {profile.role === 'scorer'
-                        ? 'Scorers run the live scoring panel for matches.'
-                        : profile.role === 'coach'
-                          ? 'Coaches manage teams and rosters.'
-                          : profile.role === 'organizer'
-                            ? 'Organizers create tournaments and schedules.'
-                            : 'Players build a rating from officially scored matches.'}
-                    </span>
-                  </label>
-                  <label className="block text-sm">
-                    <span className="text-text-secondary">Jersey number (optional)</span>
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      min="0"
-                      max="99"
-                      className={field}
-                      placeholder="e.g. 7"
-                      value={profile.jersey_number}
-                      onChange={(e) => setProfile({ ...profile, jersey_number: e.target.value })}
-                      data-testid="jersey-input"
-                    />
-                  </label>
-                </div>
-                <label className="block text-sm">
-                  <span className="text-text-secondary">Community</span>
-                  <select
-                    className={field}
-                    value={profile.community_id}
-                    onChange={(e) => setProfile({ ...profile, community_id: e.target.value })}
-                  >
-                    <option value="">Select a community…</option>
-                    {(communities.data || []).map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name} · {c.city}
+                  <Field as="select" label="I am a…" value={profile.role} onChange={(e) => setProfile({ ...profile, role: e.target.value })} disabled={user?.role === 'admin'} data-testid="role-select" hint={ROLE_HELP[profile.role]}>
+                    {SELF_SERVICE_ROLES.map((r) => (
+                      <option key={r} value={r}>
+                        {ROLE_LABELS[r]}
                       </option>
                     ))}
-                  </select>
-                </label>
+                  </Field>
+                  <Field label="Jersey number (optional)" type="number" inputMode="numeric" min="0" max="99" placeholder="e.g. 7" value={profile.jersey_number} onChange={(e) => setProfile({ ...profile, jersey_number: e.target.value })} data-testid="jersey-input" />
+                </div>
+                <Field as="select" label="Community" value={profile.community_id} onChange={(e) => setProfile({ ...profile, community_id: e.target.value })}>
+                  <option value="">Select a community…</option>
+                  {(communities.data || []).map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} · {c.city}
+                    </option>
+                  ))}
+                </Field>
               </div>
-              <Button className="mt-6 w-full" onClick={saveProfile} disabled={updateProfile.isPending}>
-                Continue
+              <Button className="mt-6" full size="lg" onClick={saveProfile} disabled={updateProfile.isPending}>
+                Continue <Icon name="arrowRight" size={18} />
               </Button>
             </div>
           )}
 
           {step === 1 && (
             <div>
-              <h1 className="font-display text-2xl font-bold">Select Your Position</h1>
-              <p className="mt-1 text-text-secondary">What do you play?</p>
-              <div className="mt-6 grid grid-cols-2 gap-3">
+              <StepTitle copy="What do you play?">Position</StepTitle>
+              <div className="mt-6 grid grid-cols-2 gap-3" role="group" aria-label="Position">
                 {Object.entries(POSITION_LABELS).map(([key, label]) => (
                   <button
                     key={key}
                     type="button"
                     onClick={() => setPosition(key)}
-                    className={`rounded-xl border p-4 text-left font-semibold transition-colors ${
-                      position === key
-                        ? 'border-accent-500 bg-accent-500/10 text-text-primary'
-                        : 'border-border-default text-text-secondary hover:border-border-strong'
-                    }`}
+                    aria-pressed={position === key}
+                    className={`min-h-14 rounded-lg border-2 p-4 text-left font-display text-lg font-bold uppercase tracking-wide transition-colors ${position === key ? 'border-accent-500 bg-accent-500/10 text-text-primary' : 'border-border-default text-text-secondary hover:border-border-strong'}`}
                   >
                     {label}
                   </button>
                 ))}
               </div>
-              <Button
-                className="mt-6 w-full"
-                onClick={savePosition}
-                disabled={!position || updateProfile.isPending}
-              >
-                Continue
+              <Button className="mt-6" full size="lg" onClick={savePosition} disabled={!position || updateProfile.isPending}>
+                Continue <Icon name="arrowRight" size={18} />
               </Button>
             </div>
           )}
 
           {step === 2 && (
             <div>
-              <h1 className="font-display text-2xl font-bold">Add Your First Match</h1>
-              <p className="mt-1 text-text-secondary">This sets your initial rating.</p>
+              <StepTitle copy="This sets your initial self-reported rating.">First match</StepTitle>
               <div className="mt-6 space-y-4">
-                <label className="block text-sm">
-                  <span className="text-text-secondary">Opponent</span>
-                  <input
-                    className={field}
-                    value={match.opponent_name}
-                    onChange={(e) => setMatch({ ...match, opponent_name: e.target.value })}
-                  />
-                </label>
-                <label className="block text-sm">
-                  <span className="text-text-secondary">Result</span>
-                  <select
-                    className={field}
-                    value={match.result}
-                    onChange={(e) => setMatch({ ...match, result: e.target.value })}
-                  >
-                    <option value="won">Won</option>
-                    <option value="lost">Lost</option>
-                  </select>
-                </label>
+                <Field label="Opponent" value={match.opponent_name} onChange={(e) => setMatch({ ...match, opponent_name: e.target.value })} required />
+                <Field as="select" label="Result" value={match.result} onChange={(e) => setMatch({ ...match, result: e.target.value })}>
+                  <option value="won">Won</option>
+                  <option value="lost">Lost</option>
+                </Field>
                 <div className="grid grid-cols-2 gap-3">
-                  <label className="block text-sm">
-                    <span className="text-text-secondary">Your Score</span>
-                    <input
-                      type="number"
-                      className={field}
-                      value={match.score_for}
-                      onChange={(e) => setMatch({ ...match, score_for: e.target.value })}
-                    />
-                  </label>
-                  <label className="block text-sm">
-                    <span className="text-text-secondary">Opponent Score</span>
-                    <input
-                      type="number"
-                      className={field}
-                      value={match.score_against}
-                      onChange={(e) => setMatch({ ...match, score_against: e.target.value })}
-                    />
-                  </label>
+                  <Field label="Your score" type="number" inputMode="numeric" value={match.score_for} onChange={(e) => setMatch({ ...match, score_for: e.target.value })} />
+                  <Field label="Opponent score" type="number" inputMode="numeric" value={match.score_against} onChange={(e) => setMatch({ ...match, score_against: e.target.value })} />
                 </div>
               </div>
-              <Button
-                className="mt-6 w-full"
-                onClick={saveMatch}
-                disabled={!match.opponent_name || recordMatch.isPending}
-              >
-                {recordMatch.isPending ? 'Calculating…' : 'Get My Rating'}
+              <Button className="mt-6" full size="lg" onClick={saveMatch} disabled={!match.opponent_name || recordMatch.isPending}>
+                {recordMatch.isPending ? 'Calculating…' : 'Get my rating'}
               </Button>
             </div>
           )}
 
           {step === 3 && (
             <div className="text-center">
-              <h1 className="font-display text-2xl font-bold">Your Initial Rating</h1>
+              <StepTitle>Rating</StepTitle>
               <div className="mt-6 flex justify-center">
                 <RatingBadge score={rating?.ratingScoreAfter ?? 0} size="lg" />
               </div>
               <p className="mt-4 text-text-secondary">
-                You're on the board with a rating of{' '}
-                <span className="font-bold text-brand-400">
-                  {Number(rating?.ratingScoreAfter ?? 0).toFixed(1)}
-                </span>
-                .
+                You're on the board with a rating of <span className="font-display text-lg font-bold text-brand-400">{Number(rating?.ratingScoreAfter ?? 0).toFixed(1)}</span>.
               </p>
               {rating?.newBadges?.length ? (
-                <div className="mt-4 flex flex-wrap justify-center gap-2">
+                <ul className="mt-4 flex flex-wrap justify-center gap-2" aria-label="New badges">
                   {rating.newBadges.map((b) => (
-                    <span
-                      key={b.key}
-                      className="rounded-full bg-brand-500/15 px-3 py-1 text-sm font-medium text-brand-300"
-                    >
+                    <li key={b.key} className="rounded-full border border-brand-500/40 bg-brand-500/10 px-3 py-1 text-sm font-semibold text-brand-400">
                       {b.icon} {b.name} unlocked!
-                    </span>
+                    </li>
                   ))}
-                </div>
+                </ul>
               ) : null}
-              <Button className="mt-6 w-full" onClick={next}>
-                Explore Rankings
+              <Button className="mt-6" full size="lg" onClick={next}>
+                Explore rankings <Icon name="arrowRight" size={18} />
               </Button>
             </div>
           )}
 
           {step === 4 && (
             <div>
-              <h1 className="font-display text-2xl font-bold">Your Local Rankings</h1>
-              <p className="mt-1 text-text-secondary">See where you stand.</p>
+              <StepTitle copy="See where you stand.">Rankings</StepTitle>
               <div className="mt-6">
                 <LeaderboardWidget entries={leaderboard.data?.entries} />
               </div>
-              <Button className="mt-6 w-full" onClick={next}>
-                Continue
+              <Button className="mt-6" full size="lg" onClick={next}>
+                Continue <Icon name="arrowRight" size={18} />
               </Button>
             </div>
           )}
 
           {step === 5 && (
             <div className="text-center">
-              <h1 className="font-display text-2xl font-bold">Share Your Profile</h1>
-              <p className="mt-1 text-text-secondary">
-                Your volleyball identity is ready. Show it off!
-              </p>
+              <StepTitle copy="Your volleyball identity is ready. Show it off!">Share</StepTitle>
               <div className="mt-6 flex flex-col gap-3">
-                <Button onClick={() => navigate(`/p/${user.id}`)}>View &amp; Share Profile</Button>
-                <Button variant="secondary" onClick={() => navigate('/dashboard')}>
-                  Go to Dashboard
+                <Button size="lg" onClick={() => navigate(`/p/${user.id}`)}>
+                  <Icon name="share" size={18} /> View &amp; share profile
+                </Button>
+                <Button size="lg" variant="secondary" onClick={() => navigate('/dashboard')}>
+                  Go to dashboard
                 </Button>
               </div>
             </div>

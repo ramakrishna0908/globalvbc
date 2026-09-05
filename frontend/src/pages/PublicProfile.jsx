@@ -10,18 +10,14 @@ import Avatar from '../components/Avatar.jsx';
 import RatingBadge from '../components/RatingBadge.jsx';
 import RankPill from '../components/RankPill.jsx';
 import EmptyState from '../components/EmptyState.jsx';
+import Icon from '../components/ui/Icon.jsx';
+import StatusBadge, { TOURNAMENT_STATUS } from '../components/ui/StatusBadge.jsx';
+import { SectionHeader } from '../components/ui/Section.jsx';
+import { Table, TableWrap, Th, Td } from '../components/ui/Table.jsx';
 import { MatchStatusPill } from '../components/tournament/MatchCard.jsx';
 import { FormDots, RatingTrendChart, SkillBars, CareerGrid, RatingChangeRow, NO_SCORED_COPY } from '../components/dashboard/ScoredStatsSection.jsx';
 import { usePublicProfile, usePlayerStats, usePlayerMatches, usePlayerRatingEvents } from '../hooks/queries.js';
 import { positionLabel, formatDate, signed, ROLE_LABELS } from '../lib/format.js';
-
-const TOURNAMENT_STATUS = {
-  draft: 'bg-bg-elevated text-text-muted',
-  published: 'bg-accent-500/15 text-accent-400',
-  live: 'bg-status-danger text-white',
-  completed: 'bg-status-success/20 text-status-success',
-  cancelled: 'bg-bg-elevated text-text-muted line-through',
-};
 
 function ShareCard({ profile }) {
   const { toast } = useToast();
@@ -38,7 +34,7 @@ function ShareCard({ profile }) {
       if (navigator.share) await navigator.share(data);
       else {
         await navigator.clipboard.writeText(url);
-        toast('Profile link copied to clipboard', { tone: 'success', icon: '🔗' });
+        toast('Profile link copied to clipboard');
       }
     } catch {
       /* user cancelled */
@@ -47,18 +43,20 @@ function ShareCard({ profile }) {
 
   return (
     <Card className="overflow-hidden">
-      <div className="bg-gradient-to-br from-accent-600 to-violet-600 p-6 text-white">
-        <div className="flex items-center gap-4">
-          <Avatar src={profile.photo_url} name={profile.name} size="lg" />
+      <div className="relative bg-bg-inverse p-5 text-text-inverse">
+        <div className="court-lines pointer-events-none absolute inset-0 opacity-60" aria-hidden="true" />
+        <div className="relative flex items-center gap-4">
+          <Avatar src={profile.photo_url} name={profile.name} size="lg" className="ring-2 ring-brand-500" />
           <div className="min-w-0 flex-1">
-            <h1 className="truncate font-display text-2xl font-bold">{profile.name}</h1>
-            <p className="opacity-90">
+            <p className="eyebrow !text-brand-400">Player card</p>
+            <h1 className="truncate font-display text-3xl font-bold uppercase leading-none">{profile.name}</h1>
+            <p className="mt-1 flex flex-wrap items-center gap-2 text-sm opacity-90">
               {positionLabel(profile.position)}
-              {profile.jersey_number != null ? <span className="ml-2 font-mono">#{profile.jersey_number}</span> : null}
-              {profile.role && profile.role !== 'player' ? <span className="ml-2 rounded-full bg-white/20 px-2 py-0.5 text-xs font-semibold">{ROLE_LABELS[profile.role] || profile.role}</span> : null}
+              {profile.jersey_number != null ? <span className="font-display font-bold">#{profile.jersey_number}</span> : null}
+              {profile.role && profile.role !== 'player' ? <span className="rounded-full bg-white/15 px-2 py-0.5 text-2xs font-bold uppercase tracking-wider">{ROLE_LABELS[profile.role] || profile.role}</span> : null}
             </p>
             <div className="mt-2">
-              <RankPill rank={profile.rank} movement="same" />
+              <RankPill rank={profile.rank} movement="same" className="!bg-white/10 !text-text-inverse" />
             </div>
           </div>
           <RatingBadge score={profile.rating_score} size="lg" />
@@ -67,36 +65,36 @@ function ShareCard({ profile }) {
 
       <div className="grid grid-cols-3 divide-x divide-border-default border-b border-border-default text-center">
         {[
-          [Number(profile.rating_score).toFixed(1), 'Rating'],
-          [`${profile.win_rate}%`, 'Win Rate'],
-          [profile.matches_played, 'Matches'],
-        ].map(([v, l]) => (
-          <div key={l} className="p-4">
-            <div className="font-display text-xl font-bold text-brand-400">{v}</div>
-            <div className="text-xs text-text-muted">{l}</div>
+          [Number(profile.rating_score).toFixed(1), 'Rating', 'text-brand-400'],
+          [`${profile.win_rate}%`, 'Win rate', ''],
+          [profile.matches_played, 'Matches', ''],
+        ].map(([v, l, c]) => (
+          <div key={l} className="p-3">
+            <div className={`num-display text-2xl ${c}`}>{v}</div>
+            <div className="eyebrow mt-0.5 !text-[10px]">{l}</div>
           </div>
         ))}
       </div>
 
-      <div className="p-5">
+      <div className="p-4">
         {profile.badges?.length ? (
-          <div className="mb-4 flex flex-wrap gap-2" aria-label="Badges">
+          <ul className="mb-4 flex flex-wrap gap-2" aria-label="Badges">
             {profile.badges.map((b) => (
-              <span key={b.key} className="rounded-full bg-brand-500/15 px-2.5 py-1 text-xs font-medium text-brand-300">
+              <li key={b.key} className="rounded-full border border-brand-500/40 bg-brand-500/10 px-2.5 py-1 text-xs font-semibold text-brand-400">
                 {b.icon} {b.name}
-              </span>
+              </li>
             ))}
-          </div>
+          </ul>
         ) : (
           <p className="mb-4 text-sm text-text-muted">No badges earned yet.</p>
         )}
 
         <div className="flex items-center justify-between gap-4">
-          <img src={qr} alt="Scan to view profile" className="h-[120px] w-[120px] rounded-lg bg-white p-1" />
+          <img src={qr} alt="QR code linking to this profile" className="h-[104px] w-[104px] rounded-md bg-white p-1" width={104} height={104} />
           <div className="flex-1">
             <p className="text-sm text-text-secondary">Scan or share this card.</p>
-            <Button className="mt-2 min-h-[44px] w-full" onClick={share}>
-              Share Profile
+            <Button className="mt-2 w-full" onClick={share}>
+              <Icon name="share" size={16} /> Share profile
             </Button>
           </div>
         </div>
@@ -105,29 +103,18 @@ function ShareCard({ profile }) {
   );
 }
 
-function SectionTitle({ id, children, right }) {
-  return (
-    <div className="mb-3 flex items-center justify-between gap-2">
-      <h2 id={id} className="font-display text-xl font-bold">
-        {children}
-      </h2>
-      {right}
-    </div>
-  );
-}
-
 function TeamsRow({ teams }) {
   if (!teams?.length) return null;
   return (
     <section aria-labelledby="teams-heading">
-      <SectionTitle id="teams-heading">Teams</SectionTitle>
+      <SectionHeader id="teams-heading" title="Teams" />
       <ul className="flex flex-wrap gap-2">
         {teams.map((t) => (
           <li key={t.id}>
-            <Link to={`/teams/${t.id}`} className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-border-strong bg-bg-surface px-3 text-sm font-semibold hover:border-accent-500 hover:bg-bg-elevated">
-              <Avatar src={t.logo_url} name={t.name} size="sm" />
-              <span>{t.name}</span>
-              {t.jersey_number != null ? <span className="font-mono text-xs text-text-muted">#{t.jersey_number}</span> : null}
+            <Link to={`/teams/${t.id}`} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-border-strong bg-bg-card px-3 text-sm font-semibold hover:border-accent-400">
+              <Avatar src={t.logo_url} name={t.name} size="xs" shape="square" />
+              <span className="font-display text-base font-bold uppercase tracking-wide">{t.name}</span>
+              {t.jersey_number != null ? <span className="font-display text-sm font-bold text-text-muted">#{t.jersey_number}</span> : null}
               {t.position ? <span className="text-xs text-text-muted">{positionLabel(t.position)}</span> : null}
             </Link>
           </li>
@@ -141,38 +128,40 @@ function TournamentHistory({ tournaments }) {
   if (!tournaments?.length) return null;
   return (
     <section aria-labelledby="tournaments-heading">
-      <SectionTitle id="tournaments-heading">Tournament history</SectionTitle>
-      <Card className="overflow-x-auto">
-        <table className="w-full min-w-[520px] text-sm">
+      <SectionHeader id="tournaments-heading" title="Tournament history" />
+      <TableWrap>
+        <Table caption="Tournament history">
           <thead>
-            <tr className="text-left text-[11px] uppercase tracking-wider text-text-muted">
-              <th scope="col" className="px-4 py-2 font-semibold">Tournament</th>
-              <th scope="col" className="px-2 py-2 font-semibold">Status</th>
-              <th scope="col" className="px-2 py-2 text-right font-semibold">Matches</th>
-              <th scope="col" className="px-2 py-2 text-right font-semibold">Wins</th>
-              <th scope="col" className="px-4 py-2 text-right font-semibold">Points</th>
+            <tr>
+              <Th sticky>Tournament</Th>
+              <Th>Status</Th>
+              <Th num>Matches</Th>
+              <Th num>Wins</Th>
+              <Th num>Points</Th>
             </tr>
           </thead>
           <tbody>
             {tournaments.map((t) => (
-              <tr key={t.id} className="border-t border-border-default">
-                <td className="px-4 py-2">
-                  <Link to={`/tournaments/${t.id}`} className="inline-flex min-h-[32px] items-center font-semibold text-text-primary hover:text-accent-400">
+              <tr key={t.id}>
+                <Td sticky>
+                  <Link to={`/tournaments/${t.id}`} className="inline-flex min-h-8 items-center font-semibold text-text-primary hover:text-accent-400">
                     {t.name}
                   </Link>
                   <div className="text-xs text-text-muted">{formatDate(t.starts_on)}</div>
-                </td>
-                <td className="px-2 py-2">
-                  <span className={`rounded-full px-2 py-0.5 text-[11px] font-black uppercase tracking-wider ${TOURNAMENT_STATUS[t.status] || TOURNAMENT_STATUS.draft}`}>{t.status}</span>
-                </td>
-                <td className="px-2 py-2 text-right font-mono tabular-nums">{t.matches}</td>
-                <td className="px-2 py-2 text-right font-mono tabular-nums">{t.wins}</td>
-                <td className="px-4 py-2 text-right font-mono font-bold tabular-nums">{t.points}</td>
+                </Td>
+                <Td>
+                  <StatusBadge status={TOURNAMENT_STATUS[t.status] || t.status} size="sm" />
+                </Td>
+                <Td num>{t.matches}</Td>
+                <Td num>{t.wins}</Td>
+                <Td num strong>
+                  {t.points}
+                </Td>
               </tr>
             ))}
           </tbody>
-        </table>
-      </Card>
+        </Table>
+      </TableWrap>
     </section>
   );
 }
@@ -180,9 +169,9 @@ function TournamentHistory({ tournaments }) {
 function MatchHistory({ query }) {
   return (
     <section aria-labelledby="matches-heading">
-      <SectionTitle id="matches-heading">Match history</SectionTitle>
+      <SectionHeader id="matches-heading" title="Match history" />
       {query.isLoading ? (
-        <LoadingBlock label="Loading matches…" />
+        <LoadingBlock label="Loading matches…" variant="cards" />
       ) : query.isError ? (
         <ErrorBlock error={query.error} retry={() => query.refetch()} />
       ) : !query.data?.length ? (
@@ -196,24 +185,28 @@ function MatchHistory({ query }) {
             const setsOpp = m.side === 'A' ? m.sets_b : m.sets_a;
             const delta = Number(m.rating_delta) || 0;
             return (
-              <Link key={m.id} to={`/matches/${m.id}`} className="flex min-h-[64px] flex-col gap-1 p-4 hover:bg-bg-elevated sm:flex-row sm:items-center sm:justify-between" data-testid="match-row">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className={`rounded px-1.5 py-0.5 text-xs font-black ${m.won ? 'bg-status-success/20 text-status-success' : 'bg-status-danger/20 text-status-danger'}`}>{m.won ? 'WON' : 'LOST'}</span>
-                    <span className="font-semibold text-text-primary">
-                      {own} <span className="font-mono tabular-nums">{setsOwn}–{setsOpp}</span> {opponent}
-                    </span>
-                    {m.status !== 'submitted' ? <MatchStatusPill status={m.status} /> : null}
-                  </div>
-                  <div className="mt-0.5 text-xs text-text-muted">
-                    {m.tournament_name || 'Friendly match'} · {formatDate(m.completed_at)}
+              <Link key={m.id} to={`/matches/${m.id}`} className="flex min-h-16 flex-col gap-2 p-3 hover:bg-bg-elevated sm:flex-row sm:items-center sm:justify-between" data-testid="match-row">
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md font-display text-base font-bold ${m.won ? 'bg-status-success/15 text-status-success' : 'bg-status-danger/15 text-status-danger'}`} aria-label={m.won ? 'Won' : 'Lost'}>
+                    {m.won ? 'W' : 'L'}
+                  </span>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-display text-base font-bold uppercase tracking-wide text-text-primary">
+                        {own} <span className="num-display text-lg">{setsOwn}–{setsOpp}</span> {opponent}
+                      </span>
+                      {m.status !== 'submitted' ? <MatchStatusPill status={m.status} /> : null}
+                    </div>
+                    <div className="mt-0.5 text-xs text-text-muted">
+                      {m.tournament_name || 'Friendly match'} · {formatDate(m.completed_at)}
+                    </div>
                   </div>
                 </div>
-                <div className="flex shrink-0 items-center gap-4 text-sm">
-                  <span className="font-mono text-xs text-text-secondary" aria-label="Personal line">
+                <div className="flex shrink-0 items-center gap-4 text-sm sm:pl-3">
+                  <span className="font-display text-sm font-semibold tabular-nums text-text-secondary" aria-label="Personal line">
                     {m.points} pts · {m.kills} K · {m.aces} ace · {m.blocks} blk · {m.digs} dig
                   </span>
-                  <span className={`font-mono font-bold tabular-nums ${delta > 0 ? 'text-status-success' : delta < 0 ? 'text-status-danger' : 'text-text-muted'}`}>{signed(delta)}</span>
+                  <span className={`num-display text-lg ${delta > 0 ? 'text-status-success' : delta < 0 ? 'text-status-danger' : 'text-text-muted'}`}>{signed(delta)}</span>
                 </div>
               </Link>
             );
@@ -227,9 +220,9 @@ function MatchHistory({ query }) {
 function RatingLog({ query }) {
   return (
     <section aria-labelledby="rating-log-heading">
-      <SectionTitle id="rating-log-heading">Why did my rating change?</SectionTitle>
+      <SectionHeader id="rating-log-heading" title="Why did my rating change?" />
       {query.isLoading ? (
-        <LoadingBlock label="Loading rating history…" />
+        <LoadingBlock label="Loading rating history…" variant="text" />
       ) : query.isError ? (
         <ErrorBlock error={query.error} retry={() => query.refetch()} />
       ) : !query.data?.length ? (
@@ -260,7 +253,7 @@ export default function PublicProfile() {
   if (profileQ.isLoading) {
     return (
       <PageShell>
-        <LoadingBlock label="Loading profile…" />
+        <LoadingBlock label="Loading profile…" variant="cards" />
       </PageShell>
     );
   }
@@ -268,7 +261,7 @@ export default function PublicProfile() {
     return (
       <PageShell>
         <div className="mx-auto max-w-md">
-          <EmptyState icon="🤔" headline="Profile not found" copy="This player profile doesn't exist." />
+          <EmptyState icon="search" headline="Profile not found" copy="This player profile doesn't exist." ctaLabel="Browse the leaderboard" ctaTo="/leaderboard" />
         </div>
       </PageShell>
     );
@@ -283,44 +276,43 @@ export default function PublicProfile() {
         <div className="min-w-0 space-y-4 lg:sticky lg:top-20 lg:self-start">
           <ShareCard profile={profile} />
           <p className="text-center text-sm text-text-muted">
-            <Link to="/register" className="font-semibold text-accent-400 hover:underline">
-              Build your own volleyball profile →
+            <Link to="/register" className="link">
+              Build your own volleyball profile
             </Link>
           </p>
         </div>
 
         <div className="space-y-8 lg:col-span-2">
           {stats.isLoading ? (
-            <LoadingBlock label="Loading official stats…" />
+            <LoadingBlock label="Loading official stats…" variant="cards" />
           ) : stats.isError ? (
             <ErrorBlock error={stats.error} retry={() => stats.refetch()} />
           ) : !played ? (
             <>
-              <EmptyState icon="📋" headline="No official stats yet" copy={NO_SCORED_COPY} />
+              <EmptyState icon="list" headline="No official stats yet" copy={NO_SCORED_COPY} />
               <TeamsRow teams={data?.teams} />
             </>
           ) : (
             <>
-              {/* ---------- rating ---------- */}
               <section aria-labelledby="rating-heading">
-                <SectionTitle id="rating-heading">Rating</SectionTitle>
+                <SectionHeader id="rating-heading" title="Rating" />
                 <div className="grid grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-3">
-                  <Card className="flex flex-col justify-between gap-3 p-5">
+                  <Card padding className="flex flex-col justify-between gap-3">
                     <div>
-                      <div className="text-sm text-text-muted">Official rating</div>
-                      <div className="font-display text-3xl font-bold text-brand-400" data-testid="rating-score">
+                      <div className="eyebrow">Official rating</div>
+                      <div className="num-display mt-1 text-4xl text-brand-400" data-testid="rating-score">
                         {Number(data.player?.rating_score ?? profile.rating_score).toFixed(1)}
                       </div>
-                      <div className="font-mono text-sm text-text-secondary">{data.player?.elo ?? profile.elo} Elo</div>
+                      <div className="font-display text-sm font-semibold text-text-secondary">{data.player?.elo ?? profile.elo} Elo</div>
                     </div>
                     <div className="text-sm text-text-secondary">
-                      <span className="font-bold text-text-primary">
+                      <span className="font-display text-lg font-bold text-text-primary">
                         {data.career.wins}–{data.career.losses}
                       </span>{' '}
                       · {data.career.win_rate}% win rate
                     </div>
                     <div>
-                      <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Recent form</div>
+                      <div className="eyebrow mb-1">Recent form</div>
                       <FormDots form={data.form} />
                     </div>
                   </Card>
@@ -330,18 +322,16 @@ export default function PublicProfile() {
                 </div>
               </section>
 
-              {/* ---------- skills ---------- */}
               <section aria-labelledby="skills-heading">
-                <SectionTitle id="skills-heading">Skills</SectionTitle>
-                <Card className="p-5">
+                <SectionHeader id="skills-heading" title="Skills" />
+                <Card padding>
                   <SkillBars skills={data.skills} />
                   <p className="mt-3 text-xs text-text-muted">0–100 efficiency scores derived from every scored action. They update after each submitted match.</p>
                 </Card>
               </section>
 
-              {/* ---------- career ---------- */}
               <section aria-labelledby="career-heading">
-                <SectionTitle id="career-heading">Career statistics</SectionTitle>
+                <SectionHeader id="career-heading" title="Career statistics" />
                 <CareerGrid career={data.career} />
               </section>
 

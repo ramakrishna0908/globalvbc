@@ -3,51 +3,46 @@ import { Link } from 'react-router-dom';
 import { deriveState, FORMAT_PRESETS } from '@engine/match.js';
 import Card from '../Card.jsx';
 import Avatar from '../Avatar.jsx';
+import Button from '../Button.jsx';
+import Icon from '../ui/Icon.jsx';
+import Logo from '../ui/Logo.jsx';
 import ProgressBar from '../ProgressBar.jsx';
+import StatusBadge from '../ui/StatusBadge.jsx';
 import Scoreboard from '../scoring/Scoreboard.jsx';
 import StandingsTable from '../tournament/StandingsTable.jsx';
+import { Eyebrow } from '../ui/Section.jsx';
 
 /* ----------------------------------------------------------------------------
  * Shared section primitives
  * -------------------------------------------------------------------------- */
 
-export function Eyebrow({ children, tone = 'muted' }) {
-  const cls = tone === 'accent' ? 'text-accent-400' : tone === 'gold' ? 'text-brand-400' : 'text-text-muted';
-  return <p className={`text-xs font-black uppercase tracking-[0.25em] ${cls}`}>{children}</p>;
-}
+export { Eyebrow };
 
 export function SectionHeading({ eyebrow, title, copy, align = 'center', tone }) {
   const alignCls = align === 'center' ? 'mx-auto text-center' : '';
   return (
     <div className={`max-w-2xl ${alignCls}`}>
       {eyebrow ? <Eyebrow tone={tone}>{eyebrow}</Eyebrow> : null}
-      <h2 className="mt-3 font-display text-3xl font-bold leading-tight text-text-primary md:text-4xl">{title}</h2>
+      <h2 className="mt-3 font-display text-display-md font-bold uppercase text-text-primary">{title}</h2>
       {copy ? <p className="mt-3 text-base text-text-secondary md:text-lg">{copy}</p> : null}
     </div>
   );
 }
 
 export function DemoTag({ children = 'Demo' }) {
-  return (
-    <span className="inline-flex items-center gap-1 rounded-full border border-brand-500/40 bg-brand-500/10 px-2.5 py-0.5 text-[11px] font-black uppercase tracking-wider text-brand-400">
-      <span aria-hidden="true">●</span> {children}
-    </span>
-  );
+  return <StatusBadge status="demo" size="sm" label={children} />;
 }
 
 /** CTA pair used in the hero and the closing band. */
-export function CtaPair({ startHref, size = 'lg', invert = false }) {
-  const base = `inline-flex min-h-[52px] items-center justify-center gap-2 rounded-xl px-6 font-semibold transition-colors ${size === 'lg' ? 'text-base md:text-lg' : 'text-sm'}`;
-  const primary = invert ? 'bg-white text-accent-600 hover:bg-white/90' : 'bg-accent-500 text-white shadow-[0_10px_30px_-10px_rgb(37_99_235/0.8)] hover:bg-accent-400';
-  const secondary = invert ? 'border border-white/60 text-white hover:bg-white/10' : 'border border-border-strong bg-bg-surface text-text-primary hover:bg-bg-elevated';
+export function CtaPair({ startHref, invert = false }) {
   return (
     <div className="flex flex-wrap gap-3">
-      <Link to={startHref} className={`${base} ${primary}`}>
-        <span aria-hidden="true">▶</span> Start Scoring
-      </Link>
-      <Link to="/leaderboard" className={`${base} ${secondary}`}>
+      <Button to={startHref} size="lg" variant={invert ? 'gold' : 'primary'} className={invert ? '' : 'shadow-glow-accent'}>
+        <Icon name="play" size={18} /> Start Scoring
+      </Button>
+      <Button to="/leaderboard" size="lg" variant="secondary" className={invert ? '!border-white/40 !bg-transparent !text-white hover:!bg-white/10' : ''}>
         Explore Players
-      </Link>
+      </Button>
     </div>
   );
 }
@@ -57,42 +52,26 @@ export function CtaPair({ startHref, size = 'lg', invert = false }) {
  * -------------------------------------------------------------------------- */
 
 const VALUE_PROPS = [
-  {
-    icon: '⚡',
-    title: 'Score any match in one tap',
-    copy: 'Rally-by-rally scoring with side-outs, rotations, timeouts and undo handled by the engine. Works offline; syncs the moment you are back.',
-    tone: 'text-accent-400',
-    ring: 'from-accent-500/25 to-transparent',
-  },
-  {
-    icon: '📈',
-    title: 'Real player stats & ratings',
-    copy: 'Every scored rally feeds a boxscore. Kills, aces, blocks, digs, assists and a versioned rating that moves for what actually happened on court.',
-    tone: 'text-brand-400',
-    ring: 'from-brand-500/25 to-transparent',
-  },
-  {
-    icon: '🏆',
-    title: 'Run tournaments end to end',
-    copy: 'Registration, pools, brackets, courts and schedules. Standings and tie-breakers update live as scorers submit results.',
-    tone: 'text-violet-400',
-    ring: 'from-violet-500/25 to-transparent',
-  },
+  { icon: 'ball', title: 'Score any match in one tap', copy: 'Rally-by-rally scoring with side-outs, rotations, timeouts and undo handled by the engine. Works offline; syncs the moment you are back.', tone: 'bg-accent-500 text-white' },
+  { icon: 'chart', title: 'Real player stats & ratings', copy: 'Every scored rally feeds a boxscore. Kills, aces, blocks, digs, assists and a versioned rating that moves for what actually happened on court.', tone: 'bg-brand-500 text-brand-950' },
+  { icon: 'trophy', title: 'Run tournaments end to end', copy: 'Registration, pools, brackets, courts and schedules. Standings and tie-breakers update live as scorers submit results.', tone: 'bg-status-success-solid text-white' },
 ];
 
 export function ValueProps() {
   return (
     <section id="product" className="mx-auto max-w-6xl px-4 py-16 md:py-24" aria-labelledby="value-heading">
       <SectionHeading eyebrow="The platform" title={<span id="value-heading">One app for the whole match day</span>} copy="Built for the scorer's table first, then for everyone who wants to know what happened." />
-      <div className="mt-12 grid gap-5 md:grid-cols-3">
-        {VALUE_PROPS.map((v) => (
-          <Card key={v.title} className="relative overflow-hidden p-6 md:p-7">
-            <div className={`pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-gradient-to-bl blur-2xl ${v.ring}`} aria-hidden="true" />
-            <div className={`text-3xl ${v.tone}`} aria-hidden="true">
-              {v.icon}
+      <div className="mt-12 grid gap-4 md:grid-cols-3">
+        {VALUE_PROPS.map((v, i) => (
+          <Card key={v.title} className="relative p-6 md:p-7">
+            <span className="absolute right-5 top-5 font-display text-5xl font-bold text-text-muted/70" aria-hidden="true">
+              0{i + 1}
+            </span>
+            <div className={`flex h-11 w-11 items-center justify-center rounded-md ${v.tone}`} aria-hidden="true">
+              <Icon name={v.icon} size={22} />
             </div>
-            <h3 className="mt-4 font-display text-xl font-bold text-text-primary">{v.title}</h3>
-            <p className="mt-2 text-text-secondary">{v.copy}</p>
+            <h3 className="mt-5 font-display text-2xl font-bold uppercase leading-none">{v.title}</h3>
+            <p className="mt-3 text-text-secondary">{v.copy}</p>
           </Card>
         ))}
       </div>
@@ -105,11 +84,11 @@ export function ValueProps() {
  * -------------------------------------------------------------------------- */
 
 const STEPS = [
-  { n: 1, label: 'Create teams', copy: 'Add rosters, jersey numbers and positions.', icon: '👥' },
-  { n: 2, label: 'Start a match', copy: 'Pick a format, set lineups, choose who serves.', icon: '🏐' },
-  { n: 3, label: 'Score rally-by-rally', copy: 'Tap the winning side, tag the action, undo anything.', icon: '⚡' },
-  { n: 4, label: 'Submit', copy: 'Lock the result. The audit trail keeps every event.', icon: '✅' },
-  { n: 5, label: 'Ratings & standings update', copy: 'Boxscores, ratings, pools and brackets refresh instantly.', icon: '📊' },
+  { n: 1, label: 'Create teams', copy: 'Add rosters, jersey numbers and positions.', icon: 'users' },
+  { n: 2, label: 'Start a match', copy: 'Pick a format, set lineups, choose who serves.', icon: 'ball' },
+  { n: 3, label: 'Score rally-by-rally', copy: 'Tap the winning side, tag the action, undo anything.', icon: 'target' },
+  { n: 4, label: 'Submit', copy: 'Lock the result. The audit trail keeps every event.', icon: 'check' },
+  { n: 5, label: 'Ratings & standings update', copy: 'Boxscores, ratings, pools and brackets refresh instantly.', icon: 'chart' },
 ];
 
 export function HowItWorks() {
@@ -118,16 +97,16 @@ export function HowItWorks() {
       <div className="mx-auto max-w-6xl px-4">
         <SectionHeading eyebrow="How it works" title={<span id="how-heading">From first serve to final standings</span>} copy="Five steps. No spreadsheets, no WhatsApp scores, no arguments about who won set two." />
         <ol className="relative mt-12 grid gap-6 md:grid-cols-5 md:gap-4">
-          <div className="pointer-events-none absolute left-7 top-0 hidden h-full w-px bg-border-strong md:left-0 md:top-7 md:block md:h-px md:w-full" aria-hidden="true" />
+          <div className="pointer-events-none absolute left-6 top-0 hidden h-full w-px bg-border-strong md:left-0 md:top-6 md:block md:h-px md:w-full" aria-hidden="true" />
           {STEPS.map((s) => (
             <li key={s.n} className="relative flex gap-4 md:flex-col md:gap-3">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-border-strong bg-bg-card text-2xl shadow-card" aria-hidden="true">
-                {s.icon}
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md border border-border-strong bg-bg-card text-brand-400 shadow-card" aria-hidden="true">
+                <Icon name={s.icon} size={22} />
               </div>
               <div>
-                <div className="text-xs font-black uppercase tracking-[0.2em] text-accent-400">Step {s.n}</div>
-                <h3 className="mt-1 font-display text-lg font-bold text-text-primary">{s.label}</h3>
-                <p className="mt-1 text-sm text-text-secondary">{s.copy}</p>
+                <div className="eyebrow !text-accent-400">Step {s.n}</div>
+                <h3 className="mt-1 font-display text-xl font-bold uppercase leading-none">{s.label}</h3>
+                <p className="mt-1.5 text-sm text-text-secondary">{s.copy}</p>
               </div>
             </li>
           ))}
@@ -142,10 +121,10 @@ export function HowItWorks() {
  * -------------------------------------------------------------------------- */
 
 const RATING_FACTORS = [
-  { title: 'Result vs expected', copy: 'Beating a team you were expected to lose to earns more than a routine win. Losing to a stronger side costs less.', icon: '🎯' },
-  { title: 'Opponent strength', copy: 'Every rating move is scaled by the gap between the two rosters on the day.', icon: '⚖️' },
-  { title: 'Individual performance', copy: 'Your boxscore against your team average nudges the delta up or down. Carry the team, get paid for it.', icon: '🔥' },
-  { title: 'Tournament level', copy: 'Friendly, local, regional and national matches carry different weights so ratings travel between communities.', icon: '🏟️' },
+  { title: 'Result vs expected', copy: 'Beating a team you were expected to lose to earns more than a routine win. Losing to a stronger side costs less.', icon: 'target' },
+  { title: 'Opponent strength', copy: 'Every rating move is scaled by the gap between the two rosters on the day.', icon: 'layers' },
+  { title: 'Individual performance', copy: 'Your boxscore against your team average nudges the delta up or down. Carry the team, get paid for it.', icon: 'flame' },
+  { title: 'Tournament level', copy: 'Friendly, local, regional and national matches carry different weights so ratings travel between communities.', icon: 'trophy' },
 ];
 
 export function RatingExplainer() {
@@ -154,32 +133,28 @@ export function RatingExplainer() {
       <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-10 lg:grid-cols-[1.1fr_1fr]">
         <div>
           <SectionHeading align="left" eyebrow="Player rating" tone="gold" title={<span id="rating-heading">A rating that explains itself</span>} copy="Every change is versioned and stored with the factors that produced it, so a player can always see exactly why their number moved." />
-          <ul className="mt-8 grid gap-4 sm:grid-cols-2">
+          <ul className="mt-8 grid gap-3 sm:grid-cols-2">
             {RATING_FACTORS.map((f) => (
-              <li key={f.title} className="rounded-xl border border-border-default bg-bg-card p-4">
-                <div className="text-2xl" aria-hidden="true">
-                  {f.icon}
-                </div>
-                <h3 className="mt-2 font-semibold text-text-primary">{f.title}</h3>
-                <p className="mt-1 text-sm text-text-secondary">{f.copy}</p>
+              <li key={f.title} className="rounded-lg border border-border-default bg-bg-card p-4">
+                <Icon name={f.icon} size={22} className="text-brand-400" />
+                <h3 className="mt-2 font-display text-lg font-bold uppercase leading-none">{f.title}</h3>
+                <p className="mt-1.5 text-sm text-text-secondary">{f.copy}</p>
               </li>
             ))}
           </ul>
         </div>
 
         <Card className="relative overflow-hidden p-6 md:p-8">
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand-500 via-brand-300 to-transparent" aria-hidden="true" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-brand-500" aria-hidden="true" />
           <div className="flex items-center justify-between">
             <Eyebrow tone="gold">Rating event · v2</Eyebrow>
             <DemoTag>Example</DemoTag>
           </div>
           <div className="mt-6 flex flex-wrap items-end gap-x-4 gap-y-2">
-            <span className="font-display text-5xl font-black tabular-nums text-text-muted line-through decoration-2">742</span>
-            <span className="font-display text-3xl text-text-muted" aria-hidden="true">
-              →
-            </span>
-            <span className="font-display text-6xl font-black tabular-nums text-brand-400">751</span>
-            <span className="rounded-full bg-status-success/15 px-3 py-1 font-mono text-lg font-bold text-status-success">+9</span>
+            <span className="num-display text-5xl text-text-muted line-through decoration-2">742</span>
+            <Icon name="arrowRight" size={28} className="self-center text-text-muted" />
+            <span className="num-display text-7xl text-brand-400">751</span>
+            <span className="rounded-md bg-status-success/15 px-3 py-1 font-display text-2xl font-bold text-status-success">+9</span>
           </div>
           <p className="mt-4 font-mono text-sm text-text-secondary" data-testid="rating-example">
             742 → 751 · +9 · Won vs stronger opponent; above-team-average performance
@@ -196,7 +171,7 @@ export function RatingExplainer() {
                   {k}
                   <span className="ml-2 hidden text-xs text-text-muted sm:inline">{v}</span>
                 </dt>
-                <dd className={`font-mono font-semibold tabular-nums ${d.startsWith('−') ? 'text-status-danger' : 'text-status-success'}`}>{d}</dd>
+                <dd className={`font-display text-base font-bold tabular-nums ${d.startsWith('−') ? 'text-status-danger' : 'text-status-success'}`}>{d}</dd>
               </div>
             ))}
           </dl>
@@ -269,9 +244,7 @@ export function LiveScoringPreview() {
             <ul className="mt-6 space-y-2 text-text-secondary">
               {['Two thumbs, one tap per rally', 'Undo is an event, so the log stays honest', 'Spectators follow along at /live/:id'].map((t) => (
                 <li key={t} className="flex items-start gap-2">
-                  <span className="mt-1 text-accent-400" aria-hidden="true">
-                    ✓
-                  </span>
+                  <Icon name="check" size={18} className="mt-0.5 text-accent-400" />
                   {t}
                 </li>
               ))}
@@ -280,9 +253,9 @@ export function LiveScoringPreview() {
 
           <Card className="relative overflow-hidden p-5 md:p-7" data-testid="live-preview">
             <div className="mb-4 flex items-center justify-between">
-              <span className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-status-danger">
-                <span className={`h-2 w-2 rounded-full bg-status-danger ${reduced ? '' : 'motion-safe:animate-pulse'}`} aria-hidden="true" />
-                Live · Court 2
+              <span className="inline-flex items-center gap-2">
+                <StatusBadge status="live" size="sm" pulse={!reduced} />
+                <span className="eyebrow">Court 2</span>
               </span>
               <DemoTag />
             </div>
@@ -290,11 +263,12 @@ export function LiveScoringPreview() {
             <ol className="mt-5 space-y-1.5 border-t border-border-default pt-4 text-sm" aria-label="Recent rallies">
               {recent.map((r) => (
                 <li key={r.seq} className="flex items-center justify-between gap-2 text-text-secondary">
-                  <span className={r.team === 'A' ? 'text-team-a' : 'text-team-b'}>
-                    {r.team === 'A' ? DEMO_TEAMS.A.name : DEMO_TEAMS.B.name}
-                    <span className="ml-2 text-text-muted">{ACTION_LABEL[r.actionType] || 'Rally'}</span>
+                  <span className="flex items-center gap-2">
+                    <span className={`h-4 w-1 rounded-full ${r.team === 'A' ? 'bg-team-a' : 'bg-team-b'}`} aria-hidden="true" />
+                    <span className={`font-semibold ${r.team === 'A' ? 'text-team-a' : 'text-team-b'}`}>{r.team === 'A' ? DEMO_TEAMS.A.name : DEMO_TEAMS.B.name}</span>
+                    <span className="text-text-muted">{ACTION_LABEL[r.actionType] || 'Rally'}</span>
                   </span>
-                  <span className="font-mono tabular-nums text-text-primary">
+                  <span className="font-display text-base font-bold tabular-nums text-text-primary">
                     {r.scoreA}–{r.scoreB}
                   </span>
                 </li>
@@ -326,18 +300,26 @@ const DEMO_BRACKET = [
 
 function BracketMatch({ m }) {
   const decided = m.sa != null;
-  const Row = ({ name, sets, won }) => (
-    <div className={`flex items-center justify-between gap-2 px-3 py-1.5 ${won ? 'font-bold text-text-primary' : 'text-text-secondary'}`}>
-      <span className="truncate">{name}</span>
-      <span className="font-mono tabular-nums">{sets ?? '–'}</span>
+  const Row = ({ name, sets, won, lost, side }) => (
+    <div className={`flex items-center justify-between gap-2 px-3 py-1.5 ${won ? 'font-bold text-text-primary' : lost ? 'text-text-muted' : 'text-text-secondary'}`}>
+      <span className="flex min-w-0 items-center gap-2">
+        <span className={`h-4 w-1 rounded-full ${side === 'A' ? 'bg-team-a' : 'bg-team-b'}`} aria-hidden="true" />
+        <span className="truncate font-display text-[15px] font-bold uppercase tracking-wide">{name}</span>
+        {won ? <Icon name="check" size={14} className="text-status-success" label="Winner" /> : null}
+      </span>
+      <span className="font-display text-lg font-bold tabular-nums">{sets ?? '–'}</span>
     </div>
   );
   return (
-    <div className={`w-full rounded-lg border bg-bg-card text-sm shadow-card ${m.live ? 'border-status-danger/60' : 'border-border-default'}`}>
-      {m.live ? <div className="border-b border-border-default px-3 py-1 text-[10px] font-black uppercase tracking-wider text-status-danger">Live now</div> : null}
-      <Row name={m.a} sets={m.sa} won={decided && m.sa > m.sb} />
+    <div className={`w-full rounded-lg border bg-bg-card text-sm shadow-card ${m.live ? 'border-status-live/60 ring-1 ring-status-live/25' : 'border-border-default'}`}>
+      {m.live ? (
+        <div className="border-b border-border-default px-3 py-1">
+          <StatusBadge status="live" size="sm" label="Live now" />
+        </div>
+      ) : null}
+      <Row name={m.a} sets={m.sa} won={decided && m.sa > m.sb} lost={decided && m.sa < m.sb} side="A" />
       <div className="mx-3 h-px bg-border-default" />
-      <Row name={m.b} sets={m.sb} won={decided && m.sb > m.sa} />
+      <Row name={m.b} sets={m.sb} won={decided && m.sb > m.sa} lost={decided && m.sb < m.sa} side="B" />
     </div>
   );
 }
@@ -349,21 +331,21 @@ export function TournamentPreview() {
       <div className="mt-12 grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[1.3fr_1fr]">
         <Card className="p-4 md:p-5">
           <div className="mb-3 flex items-center justify-between">
-            <h3 className="font-display text-lg font-bold">Pool A · Spring Open</h3>
+            <h3 className="font-display text-xl font-bold uppercase">Pool A · Spring Open</h3>
             <DemoTag />
           </div>
-          <StandingsTable rows={DEMO_STANDINGS} champion={1} />
-          <p className="mt-2 text-xs text-text-muted">Ranked by wins, then set ratio, then point ratio.</p>
+          <StandingsTable rows={DEMO_STANDINGS} champion={1} advance={2} complete />
+          <p className="mt-2 text-xs text-text-muted">Ranked by wins, then set ratio, then point ratio. Top two qualify.</p>
         </Card>
         <Card className="p-4 md:p-5">
           <div className="mb-3 flex items-center justify-between">
-            <h3 className="font-display text-lg font-bold">Knockout</h3>
+            <h3 className="font-display text-xl font-bold uppercase">Knockout</h3>
             <DemoTag />
           </div>
           <div className="grid grid-cols-2 gap-3">
             {DEMO_BRACKET.map((r) => (
               <div key={r.round} className="flex flex-col justify-around gap-3">
-                <div className="text-[11px] font-black uppercase tracking-wider text-text-muted">{r.round}</div>
+                <Eyebrow>{r.round}</Eyebrow>
                 {r.matches.map((m) => (
                   <BracketMatch key={m.a + m.b} m={m} />
                 ))}
@@ -385,7 +367,7 @@ const DEMO_SKILLS = [
   ['Receive', 64, 'blue'],
   ['Set', 52, 'blue'],
   ['Attack', 86, 'gold'],
-  ['Block', 71, 'violet'],
+  ['Block', 71, 'blue'],
   ['Dig', 69, 'blue'],
 ];
 
@@ -397,16 +379,15 @@ export function ProfilePreview() {
       <div className="mx-auto max-w-6xl px-4">
         <div className="grid grid-cols-[minmax(0,1fr)] items-center gap-10 lg:grid-cols-[1fr_1.1fr]">
           <Card className="relative overflow-hidden p-6 md:p-8">
-            <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-brand-500/10 blur-2xl" aria-hidden="true" />
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-4">
-                <Avatar name="Maya Okafor" size="lg" />
+                <Avatar name="Maya Okafor" size="lg" className="ring-2 ring-brand-500" />
                 <div>
-                  <div className="font-display text-2xl font-bold text-text-primary">Maya Okafor</div>
-                  <div className="text-sm text-text-secondary">Outside Hitter · #7 · Harbour Kings</div>
-                  <div className="mt-1 flex gap-1" aria-label="Recent form: W W L W W">
+                  <div className="font-display text-2xl font-bold uppercase leading-none">Maya Okafor</div>
+                  <div className="mt-1 text-sm text-text-secondary">Outside Hitter · #7 · Harbour Kings</div>
+                  <div className="mt-1.5 flex gap-1" role="img" aria-label="Recent form: W W L W W">
                     {['W', 'W', 'L', 'W', 'W'].map((f, i) => (
-                      <span key={i} className={`flex h-6 w-6 items-center justify-center rounded-md text-[11px] font-black ${f === 'W' ? 'bg-status-success/20 text-status-success' : 'bg-status-danger/20 text-status-danger'}`}>
+                      <span key={i} className={`flex h-6 w-6 items-center justify-center rounded-md font-display text-xs font-bold ${f === 'W' ? 'bg-status-success/20 text-status-success' : 'bg-status-danger/20 text-status-danger'}`}>
                         {f}
                       </span>
                     ))}
@@ -417,18 +398,18 @@ export function ProfilePreview() {
             </div>
 
             <div className="mt-6 grid grid-cols-3 gap-2">
-              <div className="col-span-1 rounded-xl bg-gradient-to-br from-brand-500/20 to-brand-500/5 p-3">
-                <div className="text-[11px] font-black uppercase tracking-wider text-brand-400">Rating</div>
-                <div className="font-display text-3xl font-black tabular-nums text-brand-400">751</div>
-                <div className="text-xs text-status-success">+9 last match</div>
+              <div className="rounded-lg bg-brand-500/10 p-3 ring-1 ring-inset ring-brand-500/30">
+                <div className="eyebrow !text-brand-400">Rating</div>
+                <div className="num-display text-4xl text-brand-400">751</div>
+                <div className="text-xs font-semibold text-status-success">+9 last match</div>
               </div>
               {[
                 ['Matches', '42'],
                 ['Win rate', '67%'],
               ].map(([l, v]) => (
-                <div key={l} className="rounded-xl bg-bg-elevated/60 p-3">
-                  <div className="text-[11px] font-black uppercase tracking-wider text-text-muted">{l}</div>
-                  <div className="font-display text-3xl font-black tabular-nums text-text-primary">{v}</div>
+                <div key={l} className="rounded-lg bg-bg-surface p-3">
+                  <div className="eyebrow">{l}</div>
+                  <div className="num-display text-4xl text-text-primary">{v}</div>
                 </div>
               ))}
             </div>
@@ -441,7 +422,7 @@ export function ProfilePreview() {
 
             <div className="mt-6 flex flex-wrap gap-2">
               {DEMO_BADGES.map((b) => (
-                <span key={b} className="rounded-full border border-brand-500/40 bg-brand-500/10 px-3 py-1 text-xs font-semibold text-brand-300">
+                <span key={b} className="rounded-full border border-brand-500/40 bg-brand-500/10 px-3 py-1 text-xs font-semibold text-brand-400">
                   {b}
                 </span>
               ))}
@@ -453,9 +434,7 @@ export function ProfilePreview() {
             <ul className="mt-6 space-y-2 text-text-secondary">
               {['Skills from real actions: serve, receive, set, attack, block, dig', 'Rating trend with a reason for every move', 'Share /p/you with coaches and organizers'].map((t) => (
                 <li key={t} className="flex items-start gap-2">
-                  <span className="mt-1 text-brand-400" aria-hidden="true">
-                    ✓
-                  </span>
+                  <Icon name="check" size={18} className="mt-0.5 text-brand-400" />
                   {t}
                 </li>
               ))}
@@ -478,6 +457,7 @@ const DEMO_LEADERS = [
   { rank: 4, name: 'Jonas Lindqvist', team: 'Harbour Kings', position: 'Middle Blocker', rating: 719, matches: 30, delta: '+11' },
   { rank: 5, name: 'Sofia Baptiste', team: 'Summit Setters', position: 'Libero', rating: 704, matches: 44, delta: '+2' },
 ];
+const MEDAL = { 1: 'bg-brand-500 text-brand-950', 2: 'bg-surface-400 text-white', 3: 'bg-brand-700 text-white' };
 
 export function LeaderboardPreview() {
   return (
@@ -485,25 +465,27 @@ export function LeaderboardPreview() {
       <SectionHeading eyebrow="Leaderboards" title={<span id="leaderboard-heading">See who is actually playing well</span>} copy="Overall rating, top scorers, best servers, best blockers — filtered by tournament, team, position, community or season." />
       <Card className="mx-auto mt-10 max-w-3xl overflow-hidden">
         <div className="flex items-center justify-between border-b border-border-default bg-bg-surface px-4 py-3">
-          <span className="text-xs font-black uppercase tracking-[0.2em] text-text-muted">Overall rating · All communities</span>
+          <span className="eyebrow">Overall rating · All communities</span>
           <DemoTag />
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[520px] text-sm">
-            <thead className="text-left text-[11px] uppercase tracking-wider text-text-muted">
+        <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Leaderboard preview">
+          <table className="table min-w-[520px]">
+            <thead>
               <tr>
-                <th className="px-4 py-2">#</th>
-                <th className="px-4 py-2">Player</th>
-                <th className="px-4 py-2">Team</th>
-                <th className="px-4 py-2 text-right">Rating</th>
-                <th className="px-4 py-2 text-right">Matches</th>
+                <th>#</th>
+                <th>Player</th>
+                <th>Team</th>
+                <th className="cell-num">Rating</th>
+                <th className="cell-num">Matches</th>
               </tr>
             </thead>
             <tbody>
               {DEMO_LEADERS.map((p) => (
-                <tr key={p.rank} className="border-t border-border-default">
-                  <td className="px-4 py-3 font-bold tabular-nums text-text-secondary">{p.rank}</td>
-                  <td className="px-4 py-3">
+                <tr key={p.rank}>
+                  <td>
+                    <span className={`inline-flex h-7 w-7 items-center justify-center rounded-md font-display text-sm font-bold ${MEDAL[p.rank] || 'bg-bg-elevated text-text-secondary'}`}>{p.rank}</span>
+                  </td>
+                  <td>
                     <div className="flex items-center gap-3">
                       <Avatar name={p.name} size="sm" />
                       <div>
@@ -512,20 +494,20 @@ export function LeaderboardPreview() {
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-text-secondary">{p.team}</td>
-                  <td className="px-4 py-3 text-right">
-                    <span className="font-display text-lg font-black tabular-nums text-brand-400">{p.rating}</span>
-                    <span className={`ml-2 font-mono text-xs ${p.delta.startsWith('−') ? 'text-status-danger' : 'text-status-success'}`}>{p.delta}</span>
+                  <td className="text-text-secondary">{p.team}</td>
+                  <td className="cell-num">
+                    <span className="num-display text-2xl text-brand-400">{p.rating}</span>
+                    <span className={`ml-2 font-display text-sm font-bold ${p.delta.startsWith('−') ? 'text-status-danger' : 'text-status-success'}`}>{p.delta}</span>
                   </td>
-                  <td className="px-4 py-3 text-right tabular-nums text-text-secondary">{p.matches}</td>
+                  <td className="cell-num text-text-secondary">{p.matches}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
         <div className="border-t border-border-default px-4 py-3 text-center">
-          <Link to="/leaderboard" className="inline-flex min-h-[44px] items-center font-semibold text-accent-400 hover:underline">
-            Open the live leaderboard →
+          <Link to="/leaderboard" className="link inline-flex min-h-11 items-center gap-1">
+            Open the live leaderboard <Icon name="arrowRight" size={14} />
           </Link>
         </div>
       </Card>
@@ -538,24 +520,9 @@ export function LeaderboardPreview() {
  * -------------------------------------------------------------------------- */
 
 const TESTIMONIALS = [
-  {
-    quote: 'I scored a full weekend of pool play on my phone with one hand. Undo saved me twice and nobody at the table noticed.',
-    who: 'Lena',
-    role: 'Scorer · regional league',
-    icon: '📋',
-  },
-  {
-    quote: 'The boxscore after each match is what I used to spend Sunday night building by hand. Now I coach from the data instead of the memory.',
-    who: 'Coach Adebayo',
-    role: 'Coach · Harbour Kings',
-    icon: '🧠',
-  },
-  {
-    quote: 'Sixteen teams, three courts, two divisions. Standings and the bracket updated themselves while I dealt with the parking situation.',
-    who: 'Marcus',
-    role: 'Organizer · Spring Open',
-    icon: '🏆',
-  },
+  { quote: 'I scored a full weekend of pool play on my phone with one hand. Undo saved me twice and nobody at the table noticed.', who: 'Lena', role: 'Scorer · regional league', icon: 'whistle' },
+  { quote: 'The boxscore after each match is what I used to spend Sunday night building by hand. Now I coach from the data instead of the memory.', who: 'Coach Adebayo', role: 'Coach · Harbour Kings', icon: 'chart' },
+  { quote: 'Sixteen teams, three courts, two divisions. Standings and the bracket updated themselves while I dealt with the parking situation.', who: 'Marcus', role: 'Organizer · Spring Open', icon: 'trophy' },
 ];
 
 export function Testimonials() {
@@ -563,16 +530,14 @@ export function Testimonials() {
     <section className="border-t border-border-default bg-bg-surface py-16 md:py-24" aria-labelledby="testimonials-heading">
       <div className="mx-auto max-w-6xl px-4">
         <SectionHeading eyebrow="From the table" title={<span id="testimonials-heading">Built with scorers, coaches and organizers</span>} />
-        <div className="mt-12 grid gap-5 md:grid-cols-3">
+        <div className="mt-12 grid gap-4 md:grid-cols-3">
           {TESTIMONIALS.map((t) => (
-            <figure key={t.who} className="flex flex-col rounded-xl border border-border-default bg-bg-card p-6 shadow-card">
-              <div className="text-2xl" aria-hidden="true">
-                {t.icon}
-              </div>
+            <figure key={t.who} className="flex flex-col rounded-lg border border-border-default bg-bg-card p-6 shadow-card">
+              <Icon name={t.icon} size={22} className="text-brand-400" />
               <blockquote className="mt-3 flex-1 text-text-secondary">“{t.quote}”</blockquote>
               <figcaption className="mt-4">
-                <div className="font-semibold text-text-primary">{t.who}</div>
-                <div className="text-xs uppercase tracking-wider text-text-muted">{t.role}</div>
+                <div className="font-display text-lg font-bold uppercase leading-none">{t.who}</div>
+                <div className="eyebrow mt-1">{t.role}</div>
               </figcaption>
             </figure>
           ))}
@@ -588,13 +553,12 @@ export function Testimonials() {
 
 export function FinalCTA({ startHref }) {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-accent-600 via-accent-500 to-violet-600 py-16 md:py-24" aria-labelledby="final-heading">
-      <div className="pointer-events-none absolute inset-0 opacity-20" aria-hidden="true" style={{ backgroundImage: 'radial-gradient(circle at 20% 20%, white 0, transparent 40%), radial-gradient(circle at 80% 80%, white 0, transparent 40%)' }} />
+    <section className="relative overflow-hidden bg-accent-600 py-16 md:py-24" aria-labelledby="final-heading">
+      <div className="court-lines pointer-events-none absolute inset-0 opacity-60" aria-hidden="true" />
+      <div className="pointer-events-none absolute -left-10 top-0 h-full w-24 -skew-x-12 bg-white/10" aria-hidden="true" />
       <div className="relative mx-auto max-w-3xl px-4 text-center">
-        <Eyebrow tone="accent">
-          <span className="text-white/80">Free for every community</span>
-        </Eyebrow>
-        <h2 id="final-heading" className="mt-3 font-display text-3xl font-bold text-white md:text-5xl">
+        <p className="eyebrow !text-white/80">Free for every community</p>
+        <h2 id="final-heading" className="mt-3 font-display text-display-md font-bold uppercase text-white">
           Score the next match. Build your identity.
         </h2>
         <p className="mt-4 text-white/85 md:text-lg">One tap per rally is all it takes to turn a friendly into a rated match.</p>
@@ -616,16 +580,13 @@ export function Footer() {
   return (
     <footer className="border-t border-border-default py-10">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 sm:flex-row">
-        <div className="flex items-center gap-2">
-          <span className="text-xl" aria-hidden="true">
-            🏐
-          </span>
-          <span className="font-display font-bold text-brand-500">GlobalVBC</span>
-          <span className="ml-2 text-xs text-text-muted">© {new Date().getFullYear()}</span>
+        <div className="flex items-center gap-3">
+          <Logo size="sm" />
+          <span className="text-xs text-text-muted">© {new Date().getFullYear()}</span>
         </div>
-        <nav className="flex flex-wrap gap-5 text-sm text-text-secondary" aria-label="Footer">
+        <nav className="flex flex-wrap gap-5 text-sm font-semibold text-text-secondary" aria-label="Footer">
           {links.map(([l, to]) => (
-            <Link key={to} to={to} className="inline-flex min-h-[44px] items-center hover:text-text-primary">
+            <Link key={to} to={to} className="inline-flex min-h-11 items-center hover:text-text-primary">
               {l}
             </Link>
           ))}

@@ -1,48 +1,63 @@
 import { Link } from 'react-router-dom';
+import { Table, TableWrap, Th, Td } from '../ui/Table.jsx';
+import Icon from '../ui/Icon.jsx';
 
 const ratio = (v) => (v === Infinity ? '∞' : Number.isFinite(v) ? v.toFixed(2) : '–');
 
-/** Pool/division standings with tie-breaker columns. */
-export default function StandingsTable({ rows, title, champion }) {
+/**
+ * Pool/division standings. Rank, team and W–L are always visible; set and
+ * point ratios (tie-breakers) appear from the sm breakpoint. Pass `advance`
+ * to mark the qualifying places and `champion` to crown the winner.
+ */
+export default function StandingsTable({ rows, title, champion, advance, complete = false }) {
   if (!rows?.length) return <p className="text-sm text-text-muted">No teams yet.</p>;
   return (
-    <div className="overflow-x-auto rounded-xl border border-border-default">
-      {title ? <div className="border-b border-border-default bg-bg-surface px-3 py-2 text-xs font-black uppercase tracking-[0.2em] text-text-muted">{title}</div> : null}
-      <table className="w-full min-w-[520px] text-sm">
-        <thead className="bg-bg-surface text-left text-[11px] uppercase tracking-wider text-text-muted">
+    <TableWrap>
+      {title ? <div className="eyebrow border-b border-border-default bg-bg-surface px-3 py-2">{title}</div> : null}
+      <Table caption={`${title || 'Standings'}: rank, team, played, wins, losses, sets, set ratio, point ratio`}>
+        <thead>
           <tr>
-            <th className="px-3 py-2">#</th>
-            <th className="px-3 py-2">Team</th>
-            <th className="px-2 py-2 text-center">P</th>
-            <th className="px-2 py-2 text-center">W</th>
-            <th className="px-2 py-2 text-center">L</th>
-            <th className="px-2 py-2 text-center">Sets</th>
-            <th className="px-2 py-2 text-center">Set ratio</th>
-            <th className="px-2 py-2 text-center">Pts ratio</th>
+            <Th className="w-10 !pr-0">#</Th>
+            <Th>Team</Th>
+            <Th num title="Played">P</Th>
+            <Th num title="Wins">W</Th>
+            <Th num title="Losses">L</Th>
+            <Th num>Sets</Th>
+            <Th num className="hidden sm:table-cell" title="Set ratio">SR</Th>
+            <Th num className="hidden sm:table-cell" title="Point ratio">PR</Th>
           </tr>
         </thead>
         <tbody>
-          {rows.map((r) => (
-            <tr key={r.teamId} className="border-t border-border-default">
-              <td className="px-3 py-2 font-bold tabular-nums text-text-secondary">{r.rank}</td>
-              <td className="px-3 py-2 font-semibold">
-                <Link to={`/teams/${r.teamId}`} className="hover:text-accent-400">
-                  {r.team?.name || `Team ${r.teamId}`}
-                </Link>
-                {champion && Number(champion) === Number(r.teamId) ? <span className="ml-2 text-xs">🏆</span> : null}
-              </td>
-              <td className="px-2 py-2 text-center tabular-nums">{r.played}</td>
-              <td className="px-2 py-2 text-center font-bold tabular-nums text-status-success">{r.wins}</td>
-              <td className="px-2 py-2 text-center tabular-nums text-text-secondary">{r.losses}</td>
-              <td className="px-2 py-2 text-center tabular-nums">
-                {r.setsWon}–{r.setsLost}
-              </td>
-              <td className="px-2 py-2 text-center tabular-nums text-text-secondary">{ratio(r.setRatio)}</td>
-              <td className="px-2 py-2 text-center tabular-nums text-text-secondary">{ratio(r.pointRatio)}</td>
-            </tr>
-          ))}
+          {rows.map((r) => {
+            const isChamp = champion && Number(champion) === Number(r.teamId);
+            const qualifies = advance && r.rank <= advance;
+            return (
+              <tr key={r.teamId} className={qualifies ? 'bg-status-success/5' : ''}>
+                <Td className="!pr-0">
+                  <span className={`inline-flex h-7 w-7 items-center justify-center rounded-md font-display text-sm font-bold tabular-nums ${qualifies ? 'bg-status-success/15 text-status-success' : 'bg-bg-elevated text-text-secondary'}`}>{r.rank}</span>
+                </Td>
+                <Td>
+                  <span className="flex items-center gap-2">
+                    <Link to={`/teams/${r.teamId}`} className="truncate font-display text-base font-bold uppercase tracking-wide text-text-primary hover:text-accent-400">
+                      {r.team?.name || `Team ${r.teamId}`}
+                    </Link>
+                    {isChamp ? <Icon name="trophy" size={16} className="text-brand-400" label="Champion" /> : null}
+                    {qualifies && complete && !isChamp ? <span className="rounded bg-status-success/15 px-1 font-display text-2xs font-bold uppercase text-status-success" title="Qualified">Q</span> : null}
+                  </span>
+                </Td>
+                <Td num muted>{r.played}</Td>
+                <Td num strong className="text-status-success">{r.wins}</Td>
+                <Td num muted>{r.losses}</Td>
+                <Td num>
+                  {r.setsWon}–{r.setsLost}
+                </Td>
+                <Td num muted className="hidden sm:table-cell">{ratio(r.setRatio)}</Td>
+                <Td num muted className="hidden sm:table-cell">{ratio(r.pointRatio)}</Td>
+              </tr>
+            );
+          })}
         </tbody>
-      </table>
-    </div>
+      </Table>
+    </TableWrap>
   );
 }

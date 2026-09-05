@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import Button from '../Button.jsx';
-import Card from '../Card.jsx';
+import Dialog from '../ui/Dialog.jsx';
+import Field, { Checkbox } from '../ui/Field.jsx';
 import { useRecordMatch } from '../../hooks/queries.js';
-
-const field =
-  'mt-1 w-full rounded-lg border border-border-default bg-bg-surface px-3 py-2 text-text-primary focus:border-accent-500';
 
 export default function RecordMatchModal({ open, onClose, onRecorded }) {
   const recordMatch = useRecordMatch();
@@ -21,8 +19,6 @@ export default function RecordMatchModal({ open, onClose, onRecorded }) {
       [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value,
     }));
 
-  if (!open) return null;
-
   async function submit(e) {
     e.preventDefault();
     const res = await recordMatch.mutateAsync({
@@ -35,49 +31,29 @@ export default function RecordMatchModal({ open, onClose, onRecorded }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <Card className="w-full max-w-md p-6">
-        <h2 className="font-display text-xl font-bold">Record a Match</h2>
-        <form className="mt-4 space-y-4" onSubmit={submit}>
-          <label className="block text-sm">
-            <span className="text-text-secondary">Opponent</span>
-            <input className={field} value={form.opponent_name} onChange={set('opponent_name')} required />
-          </label>
-          <div className="grid grid-cols-2 gap-3">
-            <label className="block text-sm">
-              <span className="text-text-secondary">Result</span>
-              <select className={field} value={form.result} onChange={set('result')}>
-                <option value="won">Won</option>
-                <option value="lost">Lost</option>
-              </select>
-            </label>
-            <label className="block text-sm">
-              <span className="text-text-secondary">MVP?</span>
-              <div className="mt-2">
-                <input type="checkbox" checked={form.is_mvp} onChange={set('is_mvp')} /> I was MVP
-              </div>
-            </label>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <label className="block text-sm">
-              <span className="text-text-secondary">Your Score</span>
-              <input type="number" className={field} value={form.score_for} onChange={set('score_for')} required />
-            </label>
-            <label className="block text-sm">
-              <span className="text-text-secondary">Opponent Score</span>
-              <input type="number" className={field} value={form.score_against} onChange={set('score_against')} required />
-            </label>
-          </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="ghost" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={recordMatch.isPending}>
-              {recordMatch.isPending ? 'Saving…' : 'Save Match'}
-            </Button>
-          </div>
-        </form>
-      </Card>
-    </div>
+    <Dialog open={open} onClose={onClose} title="Record a match" description="Self-reported results feed your legacy rating. Officially scored matches count separately.">
+      <form className="space-y-4" onSubmit={submit}>
+        <Field label="Opponent" value={form.opponent_name} onChange={set('opponent_name')} required />
+        <div className="grid grid-cols-2 gap-3">
+          <Field as="select" label="Result" value={form.result} onChange={set('result')}>
+            <option value="won">Won</option>
+            <option value="lost">Lost</option>
+          </Field>
+          <Checkbox className="self-end" label="I was MVP" checked={form.is_mvp} onChange={set('is_mvp')} />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Your score" type="number" inputMode="numeric" value={form.score_for} onChange={set('score_for')} required />
+          <Field label="Opponent score" type="number" inputMode="numeric" value={form.score_against} onChange={set('score_against')} required />
+        </div>
+        <div className="flex justify-end gap-2 pt-2">
+          <Button type="button" variant="ghost" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={recordMatch.isPending}>
+            {recordMatch.isPending ? 'Saving…' : 'Save match'}
+          </Button>
+        </div>
+      </form>
+    </Dialog>
   );
 }

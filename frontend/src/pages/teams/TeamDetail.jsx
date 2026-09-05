@@ -1,12 +1,17 @@
 import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import PageShell from '../../components/ui/PageShell.jsx';
-import Tabs from '../../components/ui/Tabs.jsx';
-import Field, { inputClass } from '../../components/ui/Field.jsx';
+import Tabs, { TabPanel } from '../../components/ui/Tabs.jsx';
+import Field, { Checkbox, inputClass } from '../../components/ui/Field.jsx';
 import Button from '../../components/Button.jsx';
-import Card from '../../components/Card.jsx';
+import Card, { CardHeader } from '../../components/Card.jsx';
 import Avatar from '../../components/Avatar.jsx';
 import EmptyState from '../../components/EmptyState.jsx';
+import StatCard from '../../components/StatCard.jsx';
+import Icon from '../../components/ui/Icon.jsx';
+import StatusBadge from '../../components/ui/StatusBadge.jsx';
+import { GroupLabel } from '../../components/ui/Section.jsx';
+import { Table, TableWrap, Th, Td, SortableTh } from '../../components/ui/Table.jsx';
 import { LoadingBlock, ErrorBlock } from '../../components/ui/Loading.jsx';
 import { useToast } from '../../components/ui/ToastProvider.jsx';
 import MatchCard from '../../components/tournament/MatchCard.jsx';
@@ -78,32 +83,32 @@ function AddPlayer({ team }) {
   };
 
   return (
-    <Card className="p-4" role="region" aria-label="Add player">
-      <h3 className="font-display text-lg font-bold">Add a player</h3>
-      <form onSubmit={submit} noValidate className="mt-3 grid gap-3 sm:grid-cols-2">
+    <Card padding role="region" aria-label="Add player">
+      <CardHeader title="Add a player" />
+      <form onSubmit={submit} noValidate className="grid gap-3 sm:grid-cols-2">
         <div className="relative sm:col-span-2">
-          <label className="block text-sm">
-            <span className="font-semibold text-text-secondary">Find by name</span>
-            {picked ? (
-              <div className="mt-1 flex min-h-[44px] items-center gap-2 rounded-lg border border-accent-500 bg-accent-500/10 px-3">
-                <Avatar src={picked.photo_url} name={picked.name} size="sm" />
-                <span className="flex-1 font-semibold">{picked.name}</span>
-                <button type="button" onClick={() => setPicked(null)} className="min-h-[36px] px-2 text-sm text-text-secondary hover:text-text-primary" aria-label="Clear selected player">
-                  ✕
-                </button>
-              </div>
-            ) : (
-              <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Type at least 2 letters…" className={inputClass} autoComplete="off" aria-autocomplete="list" aria-expanded={results.length > 0} />
-            )}
+          <label htmlFor="add-player-search" className="mb-1 block text-sm font-semibold text-text-secondary">
+            Find by name
           </label>
+          {picked ? (
+            <div className="flex min-h-11 items-center gap-2 rounded-md border border-accent-500 bg-accent-500/10 px-3">
+              <Avatar src={picked.photo_url} name={picked.name} size="xs" />
+              <span className="flex-1 font-semibold">{picked.name}</span>
+              <button type="button" onClick={() => setPicked(null)} className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-md text-text-secondary hover:text-text-primary" aria-label="Clear selected player">
+                <Icon name="x" size={16} />
+              </button>
+            </div>
+          ) : (
+            <input id="add-player-search" type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Type at least 2 letters…" className={inputClass} autoComplete="off" aria-autocomplete="list" aria-expanded={results.length > 0} />
+          )}
           {!picked && debounced.length >= 2 ? (
             <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-lg border border-border-default bg-bg-card shadow-elevated" role="listbox" aria-label="Player results">
               {search.isLoading ? (
                 <div className="px-3 py-2 text-sm text-text-muted">Searching…</div>
               ) : results.length ? (
                 results.map((p) => (
-                  <button key={p.id} type="button" role="option" aria-selected="false" onClick={() => setPicked(p)} className="flex min-h-[44px] w-full items-center gap-2 px-3 text-left hover:bg-bg-elevated">
-                    <Avatar src={p.photo_url} name={p.name} size="sm" />
+                  <button key={p.id} type="button" role="option" aria-selected="false" onClick={() => setPicked(p)} className="flex min-h-11 w-full items-center gap-2 px-3 text-left hover:bg-bg-elevated">
+                    <Avatar src={p.photo_url} name={p.name} size="xs" />
                     <span className="flex-1 truncate font-semibold">{p.name}</span>
                     <span className="text-xs text-text-muted">
                       {positionLabel(p.position)} · {p.elo}
@@ -126,13 +131,10 @@ function AddPlayer({ team }) {
             </option>
           ))}
         </Field>
-        <label className="flex min-h-[44px] items-center gap-3 self-end text-sm">
-          <input type="checkbox" checked={captain} onChange={(e) => setCaptain(e.target.checked)} className="h-5 w-5 accent-accent-500" />
-          <span className="font-semibold text-text-secondary">Captain</span>
-        </label>
+        <Checkbox className="self-end" label="Captain" checked={captain} onChange={(e) => setCaptain(e.target.checked)} />
         <div className="sm:col-span-2">
-          <Button type="submit" disabled={busy || (!picked && !email.trim())} className="min-h-[44px]">
-            {busy ? 'Adding…' : 'Add to roster'}
+          <Button type="submit" disabled={busy || (!picked && !email.trim())}>
+            <Icon name="plus" size={16} /> {busy ? 'Adding…' : 'Add to roster'}
           </Button>
         </div>
       </form>
@@ -151,16 +153,16 @@ function EditTeam({ team, onDone }) {
     if (out) onDone();
   };
   return (
-    <Card className="p-4" role="region" aria-label="Edit team">
-      <h3 className="font-display text-lg font-bold">Edit team</h3>
-      <form onSubmit={submit} noValidate className="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+    <Card padding role="region" aria-label="Edit team">
+      <CardHeader title="Edit team" />
+      <form onSubmit={submit} noValidate className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-start">
         <Field label="Name" value={name} onChange={(e) => setName(e.target.value)} required />
         <Field label="Logo URL" type="url" value={logo} onChange={(e) => setLogo(e.target.value)} placeholder="https://…" />
-        <div className="flex gap-2">
-          <Button type="submit" disabled={busy || !name.trim()} className="min-h-[44px]">
+        <div className="flex gap-2 sm:mt-6">
+          <Button type="submit" disabled={busy || !name.trim()}>
             Save
           </Button>
-          <Button type="button" variant="ghost" onClick={onDone} className="min-h-[44px]">
+          <Button type="button" variant="ghost" onClick={onDone}>
             Cancel
           </Button>
         </div>
@@ -174,7 +176,7 @@ function RemoveButton({ team, member }) {
   const [arm, setArm] = useState(false);
   if (!arm) {
     return (
-      <Button variant="ghost" size="sm" className="min-h-[44px] text-status-danger" onClick={() => setArm(true)} aria-label={`Remove ${member.name}`}>
+      <Button variant="ghost" size="sm" className="text-status-danger" onClick={() => setArm(true)} aria-label={`Remove ${member.name}`}>
         Remove
       </Button>
     );
@@ -184,7 +186,7 @@ function RemoveButton({ team, member }) {
       <span className="text-xs text-text-muted">Sure?</span>
       <Button
         size="sm"
-        className="min-h-[44px] bg-status-danger hover:bg-status-danger/80"
+        variant="danger"
         disabled={busy}
         onClick={async () => {
           await run(() => teamsApi.removeMember(team.id, member.id), `${member.name} removed`);
@@ -193,7 +195,7 @@ function RemoveButton({ team, member }) {
       >
         Yes, remove
       </Button>
-      <Button variant="ghost" size="sm" className="min-h-[44px]" onClick={() => setArm(false)}>
+      <Button variant="ghost" size="sm" onClick={() => setArm(false)}>
         No
       </Button>
     </span>
@@ -207,52 +209,60 @@ function Roster({ team, canEdit }) {
       {canEdit ? (
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-sm text-text-secondary">You manage this team. Add players by name or email.</p>
-          <Button variant="secondary" className="min-h-[44px]" aria-pressed={editing} onClick={() => setEditing((v) => !v)}>
-            Edit team
+          <Button variant="secondary" aria-pressed={editing} onClick={() => setEditing((v) => !v)}>
+            <Icon name="edit" size={16} /> Edit team
           </Button>
         </div>
       ) : null}
       {canEdit && editing ? <EditTeam team={team} onDone={() => setEditing(false)} /> : null}
       {canEdit ? <AddPlayer team={team} /> : null}
       {team.members.length ? (
-        <div className="overflow-x-auto rounded-xl border border-border-default">
-          <table className="w-full min-w-[560px] text-sm">
-            <thead className="bg-bg-surface text-left text-[11px] uppercase tracking-wider text-text-muted">
+        <TableWrap>
+          <Table caption="Roster">
+            <thead>
               <tr>
-                <th className="px-3 py-2">#</th>
-                <th className="px-3 py-2">Player</th>
-                <th className="px-3 py-2">Position</th>
-                <th className="px-2 py-2 text-center">Rating</th>
-                <th className="px-2 py-2 text-center">Scored matches</th>
-                {canEdit ? <th className="px-2 py-2" /> : null}
+                <Th className="w-14">#</Th>
+                <Th sticky>Player</Th>
+                <Th>Position</Th>
+                <Th num>Rating</Th>
+                <Th num className="hidden sm:table-cell">
+                  Scored matches
+                </Th>
+                {canEdit ? <Th className="text-right">Manage</Th> : null}
               </tr>
             </thead>
             <tbody>
               {team.members.map((m) => (
-                <tr key={m.id} className="border-t border-border-default">
-                  <td className="px-3 py-2 font-mono text-text-secondary">{m.jersey_number != null ? `#${m.jersey_number}` : '—'}</td>
-                  <td className="px-3 py-2">
-                    <Link to={`/p/${m.id}`} className="inline-flex items-center gap-2 font-semibold hover:text-accent-400">
-                      <Avatar src={m.photo_url} name={m.name} size="sm" />
-                      {m.name}
-                    </Link>
-                    {m.is_captain ? <span className="ml-2 rounded-full bg-brand-500/20 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-brand-400">Captain</span> : null}
-                  </td>
-                  <td className="px-3 py-2 text-text-secondary">{positionLabel(m.position)}</td>
-                  <td className="px-2 py-2 text-center font-bold tabular-nums text-brand-400">{m.elo}</td>
-                  <td className="px-2 py-2 text-center tabular-nums">{m.scored_matches}</td>
+                <tr key={m.id}>
+                  <Td className="font-display text-lg font-bold tabular-nums text-text-secondary">{m.jersey_number != null ? `#${m.jersey_number}` : '—'}</Td>
+                  <Td sticky>
+                    <span className="flex items-center gap-2">
+                      <Link to={`/p/${m.id}`} className="inline-flex min-h-10 items-center gap-2 font-semibold hover:text-accent-400">
+                        <Avatar src={m.photo_url} name={m.name} size="sm" />
+                        {m.name}
+                      </Link>
+                      {m.is_captain ? <StatusBadge status="champion" size="sm" label="Captain" /> : null}
+                    </span>
+                  </Td>
+                  <Td muted>{positionLabel(m.position)}</Td>
+                  <Td num strong className="text-brand-400">
+                    {m.elo}
+                  </Td>
+                  <Td num className="hidden sm:table-cell">
+                    {m.scored_matches}
+                  </Td>
                   {canEdit ? (
-                    <td className="px-2 py-1 text-right">
+                    <Td className="text-right">
                       <RemoveButton team={team} member={m} />
-                    </td>
+                    </Td>
                   ) : null}
                 </tr>
               ))}
             </tbody>
-          </table>
-        </div>
+          </Table>
+        </TableWrap>
       ) : (
-        <EmptyState icon="🧑‍🤝‍🧑" headline="No players yet" copy={canEdit ? 'Add players above to build the roster.' : 'The coach has not added any players.'} />
+        <EmptyState icon="users" headline="No players yet" copy={canEdit ? 'Add players above to build the roster.' : 'The coach has not added any players.'} />
       )}
     </div>
   );
@@ -260,10 +270,10 @@ function Roster({ team, canEdit }) {
 
 function Matches({ team }) {
   const q = useScoredMatches({ team: team.id, limit: 100 }, { refetchInterval: 15000 });
-  if (q.isLoading) return <LoadingBlock label="Loading matches…" />;
+  if (q.isLoading) return <LoadingBlock label="Loading matches…" variant="cards" />;
   if (q.isError) return <ErrorBlock error={q.error} retry={q.refetch} />;
   const matches = q.data || [];
-  if (!matches.length) return <EmptyState icon="🏐" headline="No matches yet" copy="Matches appear here once the team is scheduled in a tournament or scored ad hoc." />;
+  if (!matches.length) return <EmptyState icon="ball" headline="No matches yet" copy="Matches appear here once the team is scheduled in a tournament or scored ad hoc." />;
   const order = { live: 0, scheduled: 1, completed: 2, submitted: 3, cancelled: 4 };
   const sorted = [...matches].sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9) || new Date(b.scheduled_at || b.completed_at || 0) - new Date(a.scheduled_at || a.completed_at || 0));
   return (
@@ -277,16 +287,16 @@ function Matches({ team }) {
 
 const COLS = [
   ['name', 'Player', 'left'],
-  ['matches', 'M'],
-  ['points', 'Pts'],
-  ['kills', 'K'],
-  ['kill_pct', 'K%'],
-  ['aces', 'A'],
-  ['blocks', 'B'],
-  ['digs', 'D'],
-  ['assists', 'Ast'],
-  ['errors', 'Err'],
-  ['rating_delta', 'Δ'],
+  ['matches', 'M', 'Matches'],
+  ['points', 'Pts', 'Points'],
+  ['kills', 'K', 'Kills'],
+  ['kill_pct', 'K%', 'Kill percentage'],
+  ['aces', 'A', 'Aces'],
+  ['blocks', 'B', 'Blocks'],
+  ['digs', 'D', 'Digs'],
+  ['assists', 'Ast', 'Assists'],
+  ['errors', 'Err', 'Errors'],
+  ['rating_delta', 'Δ', 'Rating change'],
 ];
 
 function Analytics({ team }) {
@@ -302,84 +312,87 @@ function Analytics({ team }) {
       return dir === 'asc' ? cmp : -cmp;
     });
   }, [q.data, sort]);
-  if (q.isLoading) return <LoadingBlock label="Loading analytics…" />;
+  if (q.isLoading) return <LoadingBlock label="Loading analytics…" variant="table" />;
   if (q.isError) return <ErrorBlock error={q.error} retry={q.refetch} />;
   const results = q.data?.matches || [];
-  if (!players.length && !results.length) return <EmptyState icon="📈" headline="No analytics yet" copy="Stats build up as scored matches are submitted." />;
+  if (!players.length && !results.length) return <EmptyState icon="chart" headline="No analytics yet" copy="Stats build up as scored matches are submitted." />;
 
   const toggle = (key) => setSort((s) => ({ key, dir: s.key === key ? (s.dir === 'asc' ? 'desc' : 'asc') : key === 'name' ? 'asc' : 'desc' }));
 
   return (
     <div className="space-y-6">
       <section>
-        <h3 className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-text-muted">Player totals</h3>
+        <GroupLabel>Player totals</GroupLabel>
         {players.length ? (
-          <div className="overflow-x-auto rounded-xl border border-border-default">
-            <table className="w-full min-w-[720px] text-sm">
-              <thead className="bg-bg-surface text-[11px] uppercase tracking-wider text-text-muted">
+          <TableWrap>
+            <Table caption="Player totals — sortable" minWidth={720}>
+              <thead>
                 <tr>
                   {COLS.map(([key, label, align]) => (
-                    <th key={key} className={`px-2 py-1 ${align === 'left' ? 'text-left' : 'text-center'}`} aria-sort={sort.key === key ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}>
-                      <button type="button" onClick={() => toggle(key)} className={`min-h-[44px] font-semibold uppercase hover:text-text-primary ${sort.key === key ? 'text-accent-400' : ''}`}>
-                        {label}
-                        {sort.key === key ? <span aria-hidden="true">{sort.dir === 'asc' ? ' ▲' : ' ▼'}</span> : null}
-                      </button>
-                    </th>
+                    <SortableTh key={key} label={label} title={align === 'left' ? undefined : align} num={align !== 'left'} sticky={key === 'name'} active={sort.key === key} dir={sort.key === key ? sort.dir : null} onSort={() => toggle(key)} />
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {players.map((p) => (
-                  <tr key={p.id} className="border-t border-border-default">
-                    <td className="px-2 py-2">
+                  <tr key={p.id}>
+                    <Td sticky>
                       <Link to={`/p/${p.id}`} className="font-semibold hover:text-accent-400">
                         {p.name}
                       </Link>
-                    </td>
-                    <td className="px-2 py-2 text-center tabular-nums">{p.matches}</td>
-                    <td className="px-2 py-2 text-center font-bold tabular-nums text-brand-400">{p.points}</td>
-                    <td className="px-2 py-2 text-center tabular-nums">{p.kills}</td>
-                    <td className="px-2 py-2 text-center tabular-nums">{p.kill_pct}%</td>
-                    <td className="px-2 py-2 text-center tabular-nums">{p.aces}</td>
-                    <td className="px-2 py-2 text-center tabular-nums">{p.blocks}</td>
-                    <td className="px-2 py-2 text-center tabular-nums">{p.digs}</td>
-                    <td className="px-2 py-2 text-center tabular-nums">{p.assists}</td>
-                    <td className="px-2 py-2 text-center tabular-nums text-text-secondary">{p.errors}</td>
-                    <td className={`px-2 py-2 text-center tabular-nums ${p.rating_delta > 0 ? 'text-status-success' : p.rating_delta < 0 ? 'text-status-danger' : ''}`}>{signed(p.rating_delta || 0)}</td>
+                    </Td>
+                    <Td num>{p.matches}</Td>
+                    <Td num strong className="text-brand-400">
+                      {p.points}
+                    </Td>
+                    <Td num>{p.kills}</Td>
+                    <Td num>{p.kill_pct}%</Td>
+                    <Td num>{p.aces}</Td>
+                    <Td num>{p.blocks}</Td>
+                    <Td num>{p.digs}</Td>
+                    <Td num>{p.assists}</Td>
+                    <Td num muted>
+                      {p.errors}
+                    </Td>
+                    <Td num className={p.rating_delta > 0 ? 'font-bold text-status-success' : p.rating_delta < 0 ? 'font-bold text-status-danger' : ''}>
+                      {signed(p.rating_delta || 0)}
+                    </Td>
                   </tr>
                 ))}
               </tbody>
-            </table>
-          </div>
+            </Table>
+          </TableWrap>
         ) : (
           <p className="text-sm text-text-muted">No player stats yet.</p>
         )}
       </section>
       <section>
-        <h3 className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-text-muted">Recent results</h3>
+        <GroupLabel>Recent results</GroupLabel>
         {results.length ? (
-          <ul className="divide-y divide-border-default rounded-xl border border-border-default">
+          <Card as="ul" className="divide-y divide-border-default">
             {results.slice(0, 15).map((m) => {
               const home = Number(m.team_a_id) === Number(team.id);
               const opponent = home ? m.team_b_name : m.team_a_name;
               const sets = home ? `${m.sets_a}–${m.sets_b}` : `${m.sets_b}–${m.sets_a}`;
               return (
                 <li key={m.id}>
-                  <Link to={`/matches/${m.id}`} className="flex min-h-[48px] items-center gap-3 px-3 py-2 hover:bg-bg-elevated">
-                    <span className={`h-3 w-3 shrink-0 rounded-full ${m.won ? 'bg-status-success' : 'bg-status-danger'}`} aria-label={m.won ? 'Win' : 'Loss'} />
+                  <Link to={`/matches/${m.id}`} className="flex min-h-14 items-center gap-3 px-3 py-2 hover:bg-bg-elevated">
+                    <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md font-display text-sm font-bold ${m.won ? 'bg-status-success/15 text-status-success' : 'bg-status-danger/15 text-status-danger'}`} aria-label={m.won ? 'Win' : 'Loss'}>
+                      {m.won ? 'W' : 'L'}
+                    </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate font-semibold">vs {opponent || 'TBD'}</span>
+                      <span className="block truncate font-display text-base font-bold uppercase tracking-wide">vs {opponent || 'TBD'}</span>
                       <span className="block truncate text-xs text-text-muted">
                         {m.tournament_name || 'Friendly'}
                         {m.completed_at ? ` · ${formatDate(m.completed_at)}` : ''}
                       </span>
                     </span>
-                    <span className={`font-display text-lg font-black tabular-nums ${m.won ? 'text-status-success' : 'text-text-secondary'}`}>{sets}</span>
+                    <span className={`num-display text-2xl ${m.won ? 'text-text-primary' : 'text-text-secondary'}`}>{sets}</span>
                   </Link>
                 </li>
               );
             })}
-          </ul>
+          </Card>
         ) : (
           <p className="text-sm text-text-muted">No completed matches yet.</p>
         )}
@@ -397,7 +410,7 @@ export default function TeamDetail() {
   if (q.isLoading) {
     return (
       <PageShell>
-        <LoadingBlock label="Loading team…" />
+        <LoadingBlock label="Loading team…" variant="cards" />
       </PageShell>
     );
   }
@@ -410,52 +423,60 @@ export default function TeamDetail() {
   }
   const team = q.data;
   const canEdit = Boolean(user && (Number(user.id) === Number(team.coach_user_id) || Number(user.id) === Number(team.created_by) || user.role === 'admin'));
+  const tabsId = 'team-tabs';
 
   return (
-    <PageShell wide>
-      <header className="mb-5 flex flex-wrap items-center gap-4">
-        <Avatar src={team.logo_url} name={team.name} size="lg" />
-        <div className="min-w-0 flex-1">
-          <h1 className="font-display text-3xl font-bold md:text-4xl">{team.name}</h1>
-          <p className="mt-1 text-sm text-text-secondary">
-            {team.coach_name ? `Coach ${team.coach_name}` : 'No coach assigned'}
-            {team.community_name ? ` · ${team.community_name}` : ''}
-            {' · '}
-            {team.member_count} players
-          </p>
+    <PageShell wide back={{ to: '/teams', label: 'All teams' }}>
+      <header className="mb-5 flex flex-col gap-4 border-b border-border-default pb-5 sm:flex-row sm:items-center">
+        <div className="flex min-w-0 flex-1 items-start gap-4 sm:items-center">
+          <Avatar src={team.logo_url} name={team.name} size="lg" shape="square" />
+          <div className="min-w-0 flex-1">
+            <p className="eyebrow">Team</p>
+            <h1 className="font-display text-display-sm font-bold uppercase leading-none sm:text-display-md">{team.name}</h1>
+            <p className="mt-1 text-sm text-text-secondary">
+              {team.coach_name ? `Coach ${team.coach_name}` : 'No coach assigned'}
+              {team.community_name ? ` · ${team.community_name}` : ''}
+              {' · '}
+              {team.member_count} players
+            </p>
           {team.tournaments?.length ? (
             <ul className="mt-2 flex flex-wrap gap-2" aria-label="Tournament history">
               {team.tournaments.map((t) => (
                 <li key={t.id}>
-                  <Link to={`/tournaments/${t.id}`} className="inline-flex min-h-[32px] items-center gap-2 rounded-full border border-border-default bg-bg-surface px-3 text-xs font-semibold hover:border-accent-500">
+                  <Link to={`/tournaments/${t.id}`} className="inline-flex min-h-9 items-center gap-2 rounded-full border border-border-default bg-bg-card px-3 text-xs font-semibold hover:border-accent-400">
                     {t.name}
-                    <TournamentStatusPill status={t.status} />
+                    <TournamentStatusPill status={t.status} size="sm" />
                   </Link>
                 </li>
               ))}
             </ul>
           ) : null}
+          </div>
         </div>
-        <div className="flex gap-3">
-          <div className="rounded-xl border border-border-default bg-bg-card px-4 py-2 text-center shadow-card">
-            <div className="font-display text-2xl font-black tabular-nums text-brand-400">{team.elo}</div>
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">Rating</div>
-          </div>
-          <div className="rounded-xl border border-border-default bg-bg-card px-4 py-2 text-center shadow-card">
-            <div className="font-display text-2xl font-black tabular-nums">
-              <span className="text-status-success">{team.wins}</span>–<span className="text-text-secondary">{team.losses}</span>
-            </div>
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">W–L</div>
-          </div>
+        <div className="grid grid-cols-2 gap-2 sm:shrink-0">
+          <StatCard size="sm" align="center" label="Rating" value={team.elo} accent="gold" className="min-w-[96px]" />
+          <StatCard
+            size="sm"
+            align="center"
+            label="W–L"
+            className="min-w-[96px]"
+            value={
+              <>
+                <span className="text-status-success">{team.wins}</span>
+                <span className="text-text-muted">–</span>
+                <span className="text-text-secondary">{team.losses}</span>
+              </>
+            }
+          />
         </div>
       </header>
 
-      <Tabs tabs={TABS.map((t) => (t.key === 'roster' ? { ...t, count: team.members.length } : t))} value={tab} onChange={setTab} className="mb-5" />
-      <div role="tabpanel">
+      <Tabs id={tabsId} label="Team sections" tabs={TABS.map((t) => (t.key === 'roster' ? { ...t, count: team.members.length } : t))} value={tab} onChange={setTab} className="mb-5" />
+      <TabPanel id={tabsId} value={tab}>
         {tab === 'roster' ? <Roster team={team} canEdit={canEdit} /> : null}
         {tab === 'matches' ? <Matches team={team} /> : null}
         {tab === 'analytics' ? <Analytics team={team} /> : null}
-      </div>
+      </TabPanel>
     </PageShell>
   );
 }

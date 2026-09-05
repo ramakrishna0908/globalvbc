@@ -4,6 +4,12 @@ import PageShell from '../components/ui/PageShell.jsx';
 import { LoadingBlock, ErrorBlock } from '../components/ui/Loading.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import Card from '../components/Card.jsx';
+import Button from '../components/Button.jsx';
+import Alert from '../components/ui/Alert.jsx';
+import Icon from '../components/ui/Icon.jsx';
+import StatusBadge from '../components/ui/StatusBadge.jsx';
+import { SectionHeader } from '../components/ui/Section.jsx';
+import { Table, TableWrap, Th, Td } from '../components/ui/Table.jsx';
 import { MatchStatusPill } from '../components/tournament/MatchCard.jsx';
 import { ACTION_LABELS } from '../components/scoring/QuickActionBar.jsx';
 import { playerLabel } from '../components/scoring/PlayerGrid.jsx';
@@ -12,7 +18,7 @@ import { useScoredMatch, useBoxscore } from '../hooks/queries.js';
 import { formatDateTime, signed, positionLabel } from '../lib/format.js';
 
 const TEAM_TEXT = { A: 'text-team-a', B: 'text-team-b' };
-const TEAM_DOT = { A: 'bg-team-a', B: 'bg-team-b' };
+const TEAM_BAR = { A: 'bg-team-a', B: 'bg-team-b' };
 
 /** Mirrors backend canScore(): assigned scorer, creator (when unassigned), organizer or admin. */
 export function canScoreMatch(match, user) {
@@ -26,66 +32,65 @@ export function canScoreMatch(match, user) {
 }
 
 const BOX_COLS = [
-  { key: 'points', label: 'Pts', strong: true },
-  { key: 'kills', label: 'K' },
-  { key: 'attacks', label: 'Att' },
-  { key: 'kill_pct', label: 'K%', derive: (b) => (b.attacks ? `${Math.round((b.kills / b.attacks) * 100)}%` : '–') },
-  { key: 'aces', label: 'Ace' },
-  { key: 'serve_errors', label: 'SE' },
-  { key: 'blocks', label: 'Blk' },
-  { key: 'block_assists', label: 'BA' },
-  { key: 'digs', label: 'Dig' },
-  { key: 'assists', label: 'Ast' },
-  { key: 'errors', label: 'Err', danger: true },
+  { key: 'points', label: 'Pts', title: 'Points', strong: true },
+  { key: 'kills', label: 'K', title: 'Kills' },
+  { key: 'attacks', label: 'Att', title: 'Attack attempts' },
+  { key: 'kill_pct', label: 'K%', title: 'Kill percentage', derive: (b) => (b.attacks ? `${Math.round((b.kills / b.attacks) * 100)}%` : '–') },
+  { key: 'aces', label: 'Ace', title: 'Aces' },
+  { key: 'serve_errors', label: 'SE', title: 'Serve errors' },
+  { key: 'blocks', label: 'Blk', title: 'Blocks' },
+  { key: 'block_assists', label: 'BA', title: 'Block assists' },
+  { key: 'digs', label: 'Dig', title: 'Digs' },
+  { key: 'assists', label: 'Ast', title: 'Assists' },
+  { key: 'errors', label: 'Err', title: 'Errors', danger: true },
 ];
-
-function DeltaCell({ value }) {
-  const n = Number(value) || 0;
-  const cls = n > 0 ? 'text-status-success' : n < 0 ? 'text-status-danger' : 'text-text-muted';
-  return <td className={`py-2 text-right font-mono font-bold tabular-nums ${cls}`}>{signed(n)}</td>;
-}
 
 function BoxScoreTable({ rows, side, teamName }) {
   const list = rows.filter((r) => r.side === side).sort((a, b) => b.points - a.points || b.kills - a.kills);
   return (
-    <Card className="p-3 md:p-4">
-      <h3 className={`mb-2 text-[11px] font-black uppercase tracking-[0.2em] ${TEAM_TEXT[side]}`}>{teamName || `Team ${side}`}</h3>
+    <Card tone={side.toLowerCase()} className="min-w-0 overflow-hidden">
+      <h3 className={`eyebrow px-3 pb-1 pt-3 md:px-4 ${side === 'A' ? '!text-team-a' : '!text-team-b'}`}>{teamName || `Team ${side}`}</h3>
       {list.length ? (
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] text-sm" data-testid={`boxscore-${side}`}>
+        <div className="overflow-x-auto" tabIndex={0} role="region" aria-label={`Box score — ${teamName || `Team ${side}`}`}>
+          <Table caption={`Box score — ${teamName || `Team ${side}`}`} minWidth={760} data-testid={`boxscore-${side}`}>
             <thead>
-              <tr className="text-left text-[11px] uppercase tracking-wider text-text-muted">
-                <th scope="col" className="py-2 font-semibold">Player</th>
+              <tr>
+                <Th sticky>Player</Th>
                 {BOX_COLS.map((c) => (
-                  <th key={c.key} scope="col" className="py-2 text-right font-semibold">
+                  <Th key={c.key} num title={c.title}>
                     {c.label}
-                  </th>
+                  </Th>
                 ))}
-                <th scope="col" className="py-2 text-right font-semibold">Rating Δ</th>
+                <Th num>Rating Δ</Th>
               </tr>
             </thead>
             <tbody>
-              {list.map((r) => (
-                <tr key={r.user_id} className="border-t border-border-default">
-                  <td className="py-2">
-                    <Link to={`/p/${r.user_id}`} className="inline-flex min-h-[32px] items-center gap-1.5 font-semibold text-text-primary hover:text-accent-400">
-                      <span className="font-mono text-xs text-text-muted">{r.jersey_number != null ? `#${r.jersey_number}` : ''}</span>
-                      {r.name}
-                    </Link>
-                  </td>
-                  {BOX_COLS.map((c) => (
-                    <td key={c.key} className={`py-2 text-right font-mono tabular-nums ${c.strong ? 'font-bold text-text-primary' : c.danger ? 'text-status-danger' : 'text-text-secondary'}`}>
-                      {c.derive ? c.derive(r) : r[c.key] ?? 0}
-                    </td>
-                  ))}
-                  <DeltaCell value={r.rating_delta} />
-                </tr>
-              ))}
+              {list.map((r) => {
+                const d = Number(r.rating_delta) || 0;
+                return (
+                  <tr key={r.user_id}>
+                    <Td sticky>
+                      <Link to={`/p/${r.user_id}`} className="inline-flex min-h-8 items-center gap-1.5 font-semibold text-text-primary hover:text-accent-400">
+                        <span className="font-display text-sm font-bold tabular-nums text-text-muted">{r.jersey_number != null ? `#${r.jersey_number}` : ''}</span>
+                        {r.name}
+                      </Link>
+                    </Td>
+                    {BOX_COLS.map((c) => (
+                      <Td key={c.key} num className={c.strong ? 'font-bold text-text-primary' : c.danger ? 'text-status-danger' : 'text-text-secondary'}>
+                        {c.derive ? c.derive(r) : r[c.key] ?? 0}
+                      </Td>
+                    ))}
+                    <Td num className={`font-bold ${d > 0 ? 'text-status-success' : d < 0 ? 'text-status-danger' : 'text-text-muted'}`}>
+                      {signed(d)}
+                    </Td>
+                  </tr>
+                );
+              })}
             </tbody>
-          </table>
+          </Table>
         </div>
       ) : (
-        <p className="text-sm text-text-muted">No player statistics recorded.</p>
+        <p className="px-4 pb-4 text-sm text-text-muted">No player statistics recorded.</p>
       )}
     </Card>
   );
@@ -96,24 +101,24 @@ function RallyTimeline({ state, teams, playerName }) {
   return (
     <div className="space-y-2" data-testid="rally-timeline">
       {state.sets.map((s, i) => (
-        <details key={s.number} open={i === state.sets.length - 1} className="group rounded-xl border border-border-default bg-bg-card">
-          <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-3 px-4 py-2 font-semibold [&::-webkit-details-marker]:hidden">
-            <span>
-              Set {s.number}
-              <span className="ml-2 font-mono tabular-nums text-text-secondary">
+        <details key={s.number} open={i === state.sets.length - 1} className="group rounded-lg border border-border-default bg-bg-card">
+          <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 py-2 font-semibold [&::-webkit-details-marker]:hidden">
+            <span className="flex items-center gap-3">
+              <span className="font-display text-base font-bold uppercase tracking-wide">Set {s.number}</span>
+              <span className="num-display text-xl text-text-primary">
                 {s.scoreA}–{s.scoreB}
               </span>
-              {s.winner ? <span className={`ml-2 text-xs ${TEAM_TEXT[s.winner]}`}>{teams?.[s.winner]?.name || `Team ${s.winner}`} won</span> : null}
+              {s.winner ? <span className={`text-xs font-semibold ${TEAM_TEXT[s.winner]}`}>{teams?.[s.winner]?.name || `Team ${s.winner}`} won</span> : null}
             </span>
-            <span className="text-xs text-text-muted">
-              {s.rallies.length} rallies <span aria-hidden="true" className="inline-block transition-transform group-open:rotate-180">▾</span>
+            <span className="flex items-center gap-2 text-xs text-text-muted">
+              {s.rallies.length} rallies <Icon name="chevronDown" size={16} className="transition-transform group-open:rotate-180" />
             </span>
           </summary>
           <ol className="divide-y divide-border-default border-t border-border-default px-4">
             {s.rallies.map((r) => (
-              <li key={r.seq} className="flex min-h-[36px] items-center gap-3 py-1 text-sm">
-                <span className={`h-2 w-2 shrink-0 rounded-full ${TEAM_DOT[r.team]}`} aria-hidden="true" />
-                <span className="w-12 shrink-0 font-mono text-xs tabular-nums">
+              <li key={r.seq} className="flex min-h-9 items-center gap-3 py-1 text-sm">
+                <span className={`h-4 w-1 shrink-0 rounded-full ${TEAM_BAR[r.team]}`} aria-hidden="true" />
+                <span className="w-12 shrink-0 font-display text-sm font-bold tabular-nums">
                   {r.scoreA}–{r.scoreB}
                 </span>
                 <span className="min-w-0 flex-1 truncate">
@@ -139,13 +144,13 @@ function RallyTimeline({ state, teams, playerName }) {
 function LineupList({ side, teamName, lineup }) {
   const players = lineup?.players || [];
   return (
-    <Card className="p-3 md:p-4">
-      <h3 className={`mb-2 text-[11px] font-black uppercase tracking-[0.2em] ${TEAM_TEXT[side]}`}>{teamName || `Team ${side}`}</h3>
+    <Card tone={side.toLowerCase()} className="p-3 md:p-4">
+      <h3 className={`eyebrow mb-2 ${side === 'A' ? '!text-team-a' : '!text-team-b'}`}>{teamName || `Team ${side}`}</h3>
       {players.length ? (
         <ul className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
           {players.map((p) => (
-            <li key={p.id} className="flex min-h-[44px] items-center gap-2 rounded-lg bg-bg-surface px-2 text-sm">
-              <span className="w-8 font-mono text-xs text-text-secondary">{p.jersey_number != null ? `#${p.jersey_number}` : ''}</span>
+            <li key={p.id} className="flex min-h-11 items-center gap-2 rounded-md bg-bg-surface px-2 text-sm">
+              <span className="w-8 font-display text-base font-bold tabular-nums text-text-secondary">{p.jersey_number != null ? p.jersey_number : ''}</span>
               <Link to={`/p/${p.id}`} className="min-w-0 flex-1 truncate font-semibold text-text-primary hover:text-accent-400">
                 {p.name}
               </Link>
@@ -158,6 +163,23 @@ function LineupList({ side, teamName, lineup }) {
         <p className="text-sm text-text-muted">Lineup not submitted yet.</p>
       )}
     </Card>
+  );
+}
+
+function ResultTeam({ side, name, sets, winner, loser }) {
+  return (
+    <div className={`flex min-w-0 flex-1 items-center gap-3 ${side === 'B' ? 'flex-row-reverse text-right' : ''}`}>
+      <span className={`h-12 w-1.5 shrink-0 rounded-full ${TEAM_BAR[side]}`} aria-hidden="true" />
+      <div className="min-w-0">
+        <div className={`truncate font-display text-xl font-bold uppercase tracking-wide md:text-2xl ${loser ? 'text-text-muted' : 'text-text-primary'}`}>{name}</div>
+        {winner ? (
+          <div className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-status-success">
+            <Icon name="check" size={12} /> Winner
+          </div>
+        ) : null}
+      </div>
+      <span className={`ml-auto num-display text-5xl md:text-6xl ${loser ? 'text-text-muted' : 'text-text-primary'} ${side === 'B' ? 'mr-auto ml-0' : ''}`}>{sets}</span>
+    </div>
   );
 }
 
@@ -186,7 +208,7 @@ export default function MatchDetail() {
     const notFound = matchQ.error?.response?.status === 404 || (!matchQ.isError && !match);
     return (
       <PageShell>
-        {notFound ? <EmptyState icon="🔍" headline="Match not found" copy="This match doesn't exist or was removed." /> : <ErrorBlock error={matchQ.error} retry={() => matchQ.refetch()} />}
+        {notFound ? <EmptyState icon="search" headline="Match not found" copy="This match doesn't exist or was removed." ctaLabel="Browse tournaments" ctaTo="/tournaments" /> : <ErrorBlock error={matchQ.error} retry={() => matchQ.refetch()} />}
       </PageShell>
     );
   }
@@ -204,96 +226,119 @@ export default function MatchDetail() {
   const setsB = finished ? match.sets_b ?? state?.setsWon?.B ?? 0 : state?.setsWon?.B ?? 0;
   const winnerSide = state?.winner || (match.winner_team_id ? (match.winner_team_id === match.team_a_id ? 'A' : match.winner_team_id === match.team_b_id ? 'B' : null) : null);
   const winnerName = winnerSide === 'A' ? nameA : winnerSide === 'B' ? nameB : null;
-  const meta = [match.division_name, match.court_name, match.pool_name ? `Pool ${match.pool_name}` : null].filter(Boolean).join(' · ');
+  const meta = [match.division_name, match.pool_name ? `Pool ${match.pool_name}` : null].filter(Boolean).join(' · ');
   const when = match.completed_at || match.started_at || match.scheduled_at;
+  const canScore = (scheduled || live || match.status === 'completed') && canScoreMatch(match, user);
 
   return (
-    <PageShell wide>
-      <div className="space-y-4">
+    <PageShell wide back={match.tournament_id ? { to: `/tournaments/${match.tournament_id}`, label: match.tournament_name || 'Tournament' } : { to: '/tournaments', label: 'Tournaments' }}>
+      <div className="space-y-5">
         <header className="space-y-2">
           <div className="flex flex-wrap items-center gap-2 text-sm text-text-secondary">
-            <MatchStatusPill status={match.status} />
+            <MatchStatusPill status={match.status} size="md" />
             {match.tournament_id ? (
-              <Link to={`/tournaments/${match.tournament_id}`} className="font-semibold text-accent-400 hover:underline">
+              <Link to={`/tournaments/${match.tournament_id}`} className="link">
                 {match.tournament_name || 'Tournament'}
               </Link>
             ) : (
               <span>Friendly match</span>
             )}
             {meta ? <span>· {meta}</span> : null}
-            {when ? <span>· {formatDateTime(when)}</span> : null}
+            {match.court_name ? (
+              <span className="inline-flex items-center gap-1">
+                · <Icon name="court" size={14} /> {match.court_name}
+              </span>
+            ) : null}
+            {when ? (
+              <span className="inline-flex items-center gap-1">
+                · <Icon name="clock" size={14} /> {formatDateTime(when)}
+              </span>
+            ) : null}
+            {match.scorer_name ? (
+              <span className="inline-flex items-center gap-1 text-text-muted">
+                · <Icon name="whistle" size={14} /> Scorer {match.scorer_name}
+              </span>
+            ) : null}
           </div>
-          <h1 className="font-display text-2xl font-bold md:text-3xl">
-            <span className={winnerSide === 'B' ? 'text-text-secondary' : 'text-team-a'}>{nameA}</span> <span className="text-text-muted">vs</span>{' '}
-            <span className={winnerSide === 'A' ? 'text-text-secondary' : 'text-team-b'}>{nameB}</span>
+          <h1 className="font-display text-display-sm font-bold uppercase md:text-display-md">
+            <span className={winnerSide === 'B' ? 'text-text-muted' : 'text-team-a'}>{nameA}</span> <span className="text-lg text-text-muted">vs</span> <span className={winnerSide === 'A' ? 'text-text-muted' : 'text-team-b'}>{nameB}</span>
           </h1>
         </header>
 
         {/* ---------- result ---------- */}
         <Card className="p-4 md:p-6">
-          <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:justify-between sm:text-left">
-            <div>
-              {finished || live ? (
-                <>
-                  <div className="font-display text-4xl font-black tabular-nums">
-                    <span className="text-team-a">{setsA}</span>
-                    <span className="mx-2 text-text-muted">–</span>
-                    <span className="text-team-b">{setsB}</span>
-                    <span className="ml-2 text-base font-semibold text-text-muted">sets</span>
-                  </div>
+          {finished || live ? (
+            <>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
+                <ResultTeam side="A" name={nameA} sets={setsA} winner={winnerSide === 'A'} loser={winnerSide === 'B'} />
+                <span className="hidden text-center font-display text-sm font-bold uppercase tracking-widest text-text-muted sm:block">Sets</span>
+                <ResultTeam side="B" name={nameB} sets={setsB} winner={winnerSide === 'B'} loser={winnerSide === 'A'} />
+              </div>
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border-default pt-4">
+                <div className="text-sm">
                   {setsLine ? (
-                    <div className="mt-1 font-mono text-sm tabular-nums text-text-secondary" data-testid="sets-line">
+                    <span className="font-display text-base font-semibold tabular-nums text-text-secondary" data-testid="sets-line">
                       {setsLine}
-                    </div>
+                    </span>
                   ) : null}
                   {winnerName ? (
-                    <div className="mt-1 text-sm font-semibold">
+                    <span className="ml-3 inline-flex items-center gap-1.5 font-semibold">
+                      <Icon name="trophy" size={16} className="text-brand-400" />
                       Winner: <span className={TEAM_TEXT[winnerSide]}>{winnerName}</span>
-                      {state?.endReason && state.endReason !== 'played' ? <span className="text-text-muted"> ({state.endReason})</span> : null}
-                    </div>
+                      {state?.endReason && state.endReason !== 'played' ? <StatusBadge status={state.endReason} size="sm" /> : null}
+                    </span>
                   ) : live ? (
-                    <div className="mt-1 text-sm text-text-secondary">
+                    <span className="ml-3 text-text-secondary">
                       Set {state?.currentSet} in progress · {state?.sets?.[state.currentSet - 1]?.scoreA ?? 0}–{state?.sets?.[state.currentSet - 1]?.scoreB ?? 0}
-                    </div>
+                    </span>
                   ) : null}
-                  {match.status === 'completed' ? <p className="mt-1 text-xs text-status-warning">Awaiting the scorer's submission — stats and ratings update once submitted.</p> : null}
-                </>
-              ) : (
-                <>
-                  <div className="font-display text-xl font-bold">{scheduled ? 'Scheduled' : 'Cancelled'}</div>
-                  <div className="mt-1 text-sm text-text-secondary">
-                    {match.scheduled_at ? formatDateTime(match.scheduled_at) : 'Time to be announced'}
-                    {match.court_name ? ` · ${match.court_name}` : ''}
-                  </div>
-                  {match.scorer_name ? <div className="mt-1 text-xs text-text-muted">Scorer: {match.scorer_name}</div> : null}
-                </>
-              )}
-            </div>
-            <div className="flex flex-wrap justify-center gap-2">
-              {live ? (
-                <Link to={`/live/${match.id}`} className="inline-flex min-h-[48px] items-center gap-2 rounded-lg bg-status-danger px-5 font-bold text-white hover:opacity-90" data-testid="watch-live">
-                  <span className="h-2 w-2 rounded-full bg-white motion-safe:animate-pulse" aria-hidden="true" />
-                  Watch live
-                </Link>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {live ? (
+                    <Button to={`/live/${match.id}`} variant="live" data-testid="watch-live">
+                      <span className="h-2 w-2 rounded-full bg-white motion-safe:animate-pulse" aria-hidden="true" />
+                      Watch live
+                    </Button>
+                  ) : null}
+                  {canScore ? (
+                    <Button to={`/score/${match.id}`} data-testid="score-match">
+                      {live || match.status === 'completed' ? 'Open scoring' : 'Score this match'}
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+              {match.status === 'completed' ? (
+                <Alert tone="warning" className="mt-4">
+                  Awaiting the scorer's submission — stats and ratings update once submitted.
+                </Alert>
               ) : null}
-              {(scheduled || live || match.status === 'completed') && canScoreMatch(match, user) ? (
-                <Link to={`/score/${match.id}`} className="inline-flex min-h-[48px] items-center rounded-lg bg-accent-500 px-5 font-bold text-white hover:bg-accent-400" data-testid="score-match">
-                  {live || match.status === 'completed' ? 'Open scoring' : 'Score this match'}
-                </Link>
+            </>
+          ) : (
+            <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="font-display text-2xl font-bold uppercase">{scheduled ? 'Scheduled' : 'Cancelled'}</div>
+                <div className="mt-1 text-sm text-text-secondary">
+                  {match.scheduled_at ? formatDateTime(match.scheduled_at) : 'Time to be announced'}
+                  {match.court_name ? ` · ${match.court_name}` : ''}
+                </div>
+                {match.scorer_name ? <div className="mt-1 text-xs text-text-muted">Scorer: {match.scorer_name}</div> : null}
+              </div>
+              {canScore ? (
+                <Button to={`/score/${match.id}`} data-testid="score-match">
+                  <Icon name="play" size={16} /> Score this match
+                </Button>
               ) : null}
             </div>
-          </div>
+          )}
         </Card>
 
         {/* ---------- submitted: box score + timeline ---------- */}
         {submitted ? (
           <>
-            <section aria-labelledby="box-heading" className="space-y-3">
-              <h2 id="box-heading" className="font-display text-xl font-bold">
-                Box score
-              </h2>
+            <section aria-labelledby="box-heading">
+              <SectionHeader id="box-heading" title="Box score" />
               {boxQ.isLoading ? (
-                <LoadingBlock label="Loading box score…" />
+                <LoadingBlock label="Loading box score…" variant="table" />
               ) : boxQ.isError ? (
                 <ErrorBlock error={boxQ.error} retry={() => boxQ.refetch()} />
               ) : (
@@ -303,10 +348,8 @@ export default function MatchDetail() {
                 </div>
               )}
             </section>
-            <section aria-labelledby="timeline-heading" className="space-y-3">
-              <h2 id="timeline-heading" className="font-display text-xl font-bold">
-                Rally timeline
-              </h2>
+            <section aria-labelledby="timeline-heading">
+              <SectionHeader id="timeline-heading" title="Rally timeline" />
               <RallyTimeline state={state} teams={teams} playerName={roster} />
             </section>
           </>
@@ -314,20 +357,16 @@ export default function MatchDetail() {
 
         {/* ---------- live / awaiting submit: derived timeline ---------- */}
         {!submitted && (live || match.status === 'completed') ? (
-          <section aria-labelledby="timeline-heading" className="space-y-3">
-            <h2 id="timeline-heading" className="font-display text-xl font-bold">
-              Rally timeline
-            </h2>
+          <section aria-labelledby="timeline-heading">
+            <SectionHeader id="timeline-heading" title="Rally timeline" />
             <RallyTimeline state={state} teams={teams} playerName={roster} />
           </section>
         ) : null}
 
         {/* ---------- scheduled: lineups ---------- */}
         {scheduled || match.status === 'cancelled' ? (
-          <section aria-labelledby="lineups-heading" className="space-y-3">
-            <h2 id="lineups-heading" className="font-display text-xl font-bold">
-              Lineups
-            </h2>
+          <section aria-labelledby="lineups-heading">
+            <SectionHeader id="lineups-heading" title="Lineups" />
             <div className="grid gap-3 md:grid-cols-2">
               <LineupList side="A" teamName={nameA} lineup={match.lineups?.A} />
               <LineupList side="B" teamName={nameB} lineup={match.lineups?.B} />

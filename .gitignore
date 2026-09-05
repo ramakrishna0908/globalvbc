@@ -7,3 +7,11 @@ dist/
 coverage/
 .vercel
 .env*
+
+# playwright
+test-results/
+playwright-report/
+
+# regenerate with `npm run capture`; only phone/desktop dark captures are versioned
+docs/design/screenshots/**/*--tablet--*.png
+docs/design/screenshots/**/*--light--*.png
