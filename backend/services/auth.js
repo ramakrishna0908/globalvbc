@@ -52,8 +52,9 @@ export async function getById(id) {
 }
 
 /**
- * Password reset. No email provider is configured, so the raw token is logged
- * and (outside production) returned to the caller so the UI can show the link.
+ * Password reset. No email provider is configured yet, so the token is only
+ * ever revealed when EXPOSE_RESET_TOKENS=true is set explicitly (automated
+ * tests, local development). It is never logged.
  */
 export async function requestPasswordReset(email) {
   const { rows } = await query('SELECT id FROM users WHERE lower(email) = lower($1)', [email || '']);
@@ -64,8 +65,8 @@ export async function requestPasswordReset(email) {
     `INSERT INTO password_resets (user_id, token_hash, expires_at) VALUES ($1, $2, now() + interval '1 hour')`,
     [rows[0].id, hash]
   );
-  console.log(`[password-reset] token for ${email}: ${raw}`);
-  return process.env.NODE_ENV === 'production' ? { ok: true } : { ok: true, devResetToken: raw };
+  const expose = process.env.EXPOSE_RESET_TOKENS === 'true' && process.env.NODE_ENV !== 'production';
+  return expose ? { ok: true, devResetToken: raw } : { ok: true };
 }
 
 export async function resetPassword({ token, password }) {
