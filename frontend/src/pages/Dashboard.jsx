@@ -14,6 +14,37 @@ import RecognitionCenter from '../components/dashboard/RecognitionCenter.jsx';
 import LeaderboardWidget from '../components/dashboard/LeaderboardWidget.jsx';
 import UpcomingGames from '../components/dashboard/UpcomingGames.jsx';
 import RecordMatchModal from '../components/dashboard/RecordMatchModal.jsx';
+import ScoredStatsSection from '../components/dashboard/ScoredStatsSection.jsx';
+
+/** Role-aware shortcuts. Everyone can explore tournaments; roles get their own workspace. */
+export function quickActionsForRole(role) {
+  const actions = [];
+  if (role === 'scorer' || role === 'admin') actions.push({ to: '/score', label: 'Open scorer dashboard', icon: '🎯', primary: true });
+  if (role === 'organizer' || role === 'admin') actions.push({ to: '/tournaments?mine=1', label: 'Manage tournaments', icon: '🏆', primary: true });
+  if (role === 'coach' || role === 'admin') actions.push({ to: '/teams?mine=1', label: 'My teams', icon: '👥', primary: true });
+  actions.push({ to: '/tournaments', label: 'Explore tournaments', icon: '🔎', primary: actions.length === 0 });
+  return actions;
+}
+
+function QuickActions({ role }) {
+  const actions = quickActionsForRole(role);
+  return (
+    <nav aria-label="Quick actions" className="flex flex-wrap gap-2" data-testid="quick-actions">
+      {actions.map((a) => (
+        <Link
+          key={a.to}
+          to={a.to}
+          className={`inline-flex min-h-[44px] items-center gap-2 rounded-lg px-4 text-sm font-semibold transition-colors ${
+            a.primary ? 'bg-accent-500 text-white hover:bg-accent-400' : 'border border-border-strong bg-bg-surface text-text-primary hover:bg-bg-elevated'
+          }`}
+        >
+          <span aria-hidden="true">{a.icon}</span>
+          {a.label}
+        </Link>
+      ))}
+    </nav>
+  );
+}
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -41,6 +72,7 @@ export default function Dashboard() {
         right={<Button size="sm" onClick={() => setRecordOpen(true)}>+ Record Match</Button>}
       />
       <main className="mx-auto max-w-6xl space-y-6 px-4 py-8">
+        {user ? <QuickActions role={user.role} /> : null}
         {loading || !metrics ? (
           <div className="py-20 text-center text-text-muted">Loading your dashboard…</div>
         ) : (
@@ -58,6 +90,8 @@ export default function Dashboard() {
             )}
 
             <SummaryCards user={user} metrics={metrics} rank={rank} badgeCount={earnedBadges} />
+
+            <ScoredStatsSection userId={user.id} />
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
               <div className="space-y-6 lg:col-span-2">

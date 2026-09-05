@@ -31,10 +31,10 @@ export default function PointButton({ side, label, onPoint, disabled, guardMs = 
       disabled={disabled}
       aria-label={`${label || `Team ${side}`} point`}
       data-testid={`point-${side}`}
-      className={`flex min-h-[96px] w-full select-none flex-col items-center justify-center rounded-2xl font-display text-2xl font-black uppercase tracking-wide shadow-elevated transition-transform motion-safe:active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 md:min-h-[128px] md:text-3xl ${TONE[side]} ${className}`}
+      className={`flex min-h-[96px] w-full min-w-0 select-none flex-col items-center justify-center overflow-hidden rounded-2xl px-2 font-display text-lg font-black uppercase tracking-wide shadow-elevated transition-transform motion-safe:active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 sm:text-2xl md:min-h-[128px] md:text-3xl ${TONE[side]} ${className}`}
     >
       <span className="text-sm font-semibold uppercase tracking-widest opacity-80">Point</span>
-      <span className="truncate px-2">{label || `Team ${side}`}</span>
+      <span className="w-full truncate text-center">{label || `Team ${side}`}</span>
     </button>
   );
 }
