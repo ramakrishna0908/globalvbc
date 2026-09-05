@@ -1,4 +1,5 @@
 import { ACTION_LABELS } from './QuickActionBar.jsx';
+import Icon from '../ui/Icon.jsx';
 
 function time(ts) {
   if (!ts) return '';
@@ -48,25 +49,24 @@ export default function RallyTimeline({ events, state, playerName = (id) => `#${
       {rows.map((e) => {
         const isUndone = undone.has(e.seq);
         const undoable = canUndo && !isUndone && !['MATCH_START', 'SET_START', 'MATCH_END'].includes(e.type) && !!onUndo;
+        const team = e.payload?.team;
         return (
-          <li key={e.clientEventId || e.seq} className={`flex items-center gap-3 py-1.5 text-sm ${isUndone ? 'text-text-muted line-through' : 'text-text-primary'}`}>
-            <span className="w-16 shrink-0 font-mono text-[11px] text-text-muted">{time(e.clientTs || e.ts)}</span>
-            <span className={`w-12 shrink-0 font-mono text-xs tabular-nums ${e.payload?.team === 'A' ? 'text-team-a' : e.payload?.team === 'B' ? 'text-team-b' : 'text-text-muted'}`}>
-              {scoreBySeq.get(e.seq) || ''}
-            </span>
+          <li key={e.clientEventId || e.seq} className={`flex min-h-11 items-center gap-3 py-1 text-sm ${isUndone ? 'text-text-muted line-through' : 'text-text-primary'}`}>
+            <span className="hidden w-[4.5rem] shrink-0 font-mono text-2xs text-text-muted sm:block">{time(e.clientTs || e.ts)}</span>
+            <span className={`h-5 w-1 shrink-0 rounded-full ${team === 'A' ? 'bg-team-a' : team === 'B' ? 'bg-team-b' : 'bg-border-strong'}`} aria-hidden="true" />
+            <span className="w-12 shrink-0 font-display text-sm font-bold tabular-nums text-text-secondary">{scoreBySeq.get(e.seq) || ''}</span>
             <span className="min-w-0 flex-1 truncate">{describe(e, playerName)}</span>
-            {e.provisional ? <span className="text-[10px] uppercase tracking-wider text-status-warning" title="Not yet synced">local</span> : null}
+            {e.provisional ? (
+              <span className="rounded bg-status-warning/15 px-1 font-display text-[10px] font-bold uppercase tracking-wider text-status-warning" title="Not yet synced">
+                local
+              </span>
+            ) : null}
             {undoable ? (
-              <button
-                type="button"
-                onClick={() => onUndo(e.seq)}
-                className="min-h-[44px] min-w-[44px] rounded-lg px-2 text-xs font-bold uppercase text-accent-400 hover:bg-bg-elevated"
-                aria-label={`Undo: ${describe(e, playerName)}`}
-              >
-                Undo
+              <button type="button" onClick={() => onUndo(e.seq)} className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-md px-2 font-display text-xs font-bold uppercase tracking-wide text-accent-400 hover:bg-bg-elevated" aria-label={`Undo: ${describe(e, playerName)}`}>
+                <Icon name="undo" size={14} /> Undo
               </button>
             ) : (
-              <span className="min-w-[44px]" />
+              <span className="min-w-11" />
             )}
           </li>
         );

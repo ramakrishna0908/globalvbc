@@ -4,6 +4,9 @@ import PageShell from '../../components/ui/PageShell.jsx';
 import Button from '../../components/Button.jsx';
 import Card from '../../components/Card.jsx';
 import EmptyState from '../../components/EmptyState.jsx';
+import FilterChips from '../../components/ui/FilterChips.jsx';
+import Icon from '../../components/ui/Icon.jsx';
+import StatusBadge from '../../components/ui/StatusBadge.jsx';
 import { LoadingBlock, ErrorBlock } from '../../components/ui/Loading.jsx';
 import { useTournaments } from '../../hooks/queries.js';
 import { useAuth } from '../../context/AuthContext.jsx';
@@ -21,35 +24,45 @@ const FILTER_STATUS = { live: ['live'], upcoming: ['published'], completed: ['co
 
 function TournamentCard({ t }) {
   const place = placeLabel(t);
+  const live = t.status === 'live';
   return (
-    <Link to={`/tournaments/${t.id}`} className="block focus-visible:outline-none">
-      <Card className={`h-full p-4 transition-colors hover:border-accent-500 ${t.status === 'live' ? 'border-status-danger/60' : ''}`}>
-        <div className="flex items-start justify-between gap-3">
-          <h2 className="font-display text-lg font-bold leading-tight text-text-primary">{t.name}</h2>
-          <TournamentStatusPill status={t.status} className="shrink-0" />
+    <Card as="article" tone={live ? 'live' : undefined} interactive className="flex h-full flex-col">
+      <div className="flex items-start justify-between gap-3 p-4 pb-0">
+        <div className="flex flex-wrap items-center gap-1.5">
+          {live && t.live_count ? <LiveBadge count={t.live_count} /> : <TournamentStatusPill status={t.status} size="sm" />}
+          {t.registration_open && t.status === 'published' ? <StatusBadge status="registration_open" size="sm" /> : null}
         </div>
-        <div className="mt-2 space-y-1 text-sm text-text-secondary">
-          <div>
-            <span aria-hidden="true">📅 </span>
-            {dateRange(t)}
+        <span className="eyebrow shrink-0 !text-[10px]">{LEVEL_LABELS[t.level] || t.level}</span>
+      </div>
+      <div className="flex-1 p-4 pt-2">
+        <h2 className="font-display text-2xl font-bold leading-none">
+          <Link to={`/tournaments/${t.id}`} className="after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none">
+            {t.name}
+          </Link>
+        </h2>
+        <dl className="mt-3 space-y-1 text-sm text-text-secondary">
+          <div className="flex items-center gap-2">
+            <dt className="sr-only">Dates</dt>
+            <Icon name="calendar" size={15} className="text-text-muted" />
+            <dd>{dateRange(t)}</dd>
           </div>
           {place ? (
-            <div className="truncate">
-              <span aria-hidden="true">📍 </span>
-              {place}
+            <div className="flex items-center gap-2">
+              <dt className="sr-only">Venue</dt>
+              <Icon name="pin" size={15} className="text-text-muted" />
+              <dd className="truncate">{place}</dd>
             </div>
           ) : null}
-        </div>
-        <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-text-muted">
-          <span className="rounded-full bg-bg-elevated px-2 py-0.5">{LEVEL_LABELS[t.level] || t.level}</span>
-          <span className="rounded-full bg-bg-elevated px-2 py-0.5">{TOURNAMENT_FORMAT_LABELS[t.format] || t.format}</span>
-          <span className="rounded-full bg-bg-elevated px-2 py-0.5">
-            {t.team_count} {t.team_count === 1 ? 'team' : 'teams'}
-          </span>
-          <LiveBadge count={t.live_count} />
-        </div>
-      </Card>
-    </Link>
+        </dl>
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border-default px-4 py-2.5 text-xs font-semibold text-text-secondary">
+        <span>{TOURNAMENT_FORMAT_LABELS[t.format] || t.format}</span>
+        <span className="inline-flex items-center gap-1 tabular-nums">
+          <Icon name="users" size={14} className="text-text-muted" />
+          {t.team_count} {t.team_count === 1 ? 'team' : 'teams'}
+        </span>
+      </div>
+    </Card>
   );
 }
 
@@ -64,6 +77,7 @@ export default function Tournaments() {
   const all = q.data || [];
   const list = filter === 'all' ? all : all.filter((t) => FILTER_STATUS[filter].includes(t.status));
   const canCreate = ['organizer', 'coach', 'scorer', 'admin'].includes(user?.role);
+  const counts = Object.fromEntries(FILTERS.map((f) => [f.key, f.key === 'all' ? all.length : all.filter((t) => FILTER_STATUS[f.key].includes(t.status)).length]));
 
   const setMine = (on) => {
     const next = new URLSearchParams(params);
@@ -79,46 +93,27 @@ export default function Tournaments() {
       actions={
         <>
           {user ? (
-            <Button variant={mine ? 'primary' : 'secondary'} className="min-h-[44px]" aria-pressed={mine} onClick={() => setMine(!mine)}>
-              {mine ? '✓ My tournaments' : 'My tournaments'}
+            <Button variant={mine ? 'primary' : 'secondary'} aria-pressed={mine} onClick={() => setMine(!mine)}>
+              {mine ? <Icon name="check" size={16} /> : null} My tournaments
             </Button>
           ) : null}
           {canCreate ? (
-            <Link to="/tournaments/new">
-              <Button className="min-h-[44px]">+ Create tournament</Button>
-            </Link>
+            <Button to="/tournaments/new" variant={mine ? 'gold' : 'primary'}>
+              <Icon name="plus" size={16} /> Create tournament
+            </Button>
           ) : null}
         </>
       }
     >
-      <div role="group" aria-label="Filter tournaments" className="mb-5 flex flex-wrap gap-2">
-        {FILTERS.map((f) => {
-          const count = f.key === 'all' ? all.length : all.filter((t) => FILTER_STATUS[f.key].includes(t.status)).length;
-          const active = filter === f.key;
-          return (
-            <button
-              key={f.key}
-              type="button"
-              aria-pressed={active}
-              onClick={() => setFilter(f.key)}
-              className={`min-h-[44px] rounded-full border px-4 text-sm font-semibold transition-colors ${
-                active ? 'border-accent-500 bg-accent-500/15 text-text-primary' : 'border-border-default bg-bg-surface text-text-secondary hover:text-text-primary'
-              }`}
-            >
-              {f.label}
-              {count ? <span className="ml-1.5 text-xs text-text-muted">{count}</span> : null}
-            </button>
-          );
-        })}
-      </div>
+      <FilterChips label="Filter tournaments" options={FILTERS.map((f) => ({ ...f, count: counts[f.key] }))} value={filter} onChange={setFilter} className="mb-5" />
 
       {q.isLoading ? (
-        <LoadingBlock label="Loading tournaments…" />
+        <LoadingBlock label="Loading tournaments…" variant="cards" count={6} />
       ) : q.isError ? (
         <ErrorBlock error={q.error} retry={q.refetch} />
       ) : !list.length ? (
         <EmptyState
-          icon="🏆"
+          icon="trophy"
           headline={all.length ? `No ${filter} tournaments` : mine ? 'You have not created a tournament yet' : 'No tournaments yet'}
           copy={all.length ? 'Try another filter.' : canCreate ? 'Set up your first event in a couple of minutes — formats, courts and scoring rules included.' : 'Check back soon, or ask an organizer to publish their event.'}
           ctaLabel={all.length ? 'Show all' : canCreate ? 'Create tournament' : undefined}
@@ -127,7 +122,7 @@ export default function Tournaments() {
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {list.map((t) => (
-            <li key={t.id}>
+            <li key={t.id} className="relative">
               <TournamentCard t={t} />
             </li>
           ))}

@@ -1,6 +1,7 @@
 import { useTheme } from '../context/ThemeContext.jsx';
+import Icon from './ui/Icon.jsx';
 
-export default function ThemeToggle() {
+export default function ThemeToggle({ className = '' }) {
   const { theme, toggle } = useTheme();
   const isLight = theme === 'light';
   return (
@@ -8,9 +9,10 @@ export default function ThemeToggle() {
       type="button"
       onClick={toggle}
       aria-label={isLight ? 'Switch to dark mode' : 'Switch to light mode'}
-      className="min-h-[44px] rounded-lg border border-border-default bg-bg-surface px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary"
+      title={isLight ? 'Dark mode' : 'Light mode'}
+      className={`inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-border-default bg-bg-card text-text-secondary transition-colors hover:border-accent-400 hover:text-text-primary ${className}`}
     >
-      {isLight ? '☾ Dark' : '☀ Light'}
+      <Icon name={isLight ? 'moon' : 'sun'} size={18} />
     </button>
   );
 }

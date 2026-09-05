@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import AppHeader from '../components/AppHeader.jsx';
 import Button from '../components/Button.jsx';
+import Icon from '../components/ui/Icon.jsx';
+import PageShell from '../components/ui/PageShell.jsx';
 import EmptyState from '../components/EmptyState.jsx';
+import { LoadingBlock } from '../components/ui/Loading.jsx';
+import { SectionHeader } from '../components/ui/Section.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useStats, useMatches, useBadges, useLeaderboard } from '../hooks/queries.js';
 import DashboardHeader from '../components/dashboard/DashboardHeader.jsx';
@@ -19,10 +21,10 @@ import ScoredStatsSection from '../components/dashboard/ScoredStatsSection.jsx';
 /** Role-aware shortcuts. Everyone can explore tournaments; roles get their own workspace. */
 export function quickActionsForRole(role) {
   const actions = [];
-  if (role === 'scorer' || role === 'admin') actions.push({ to: '/score', label: 'Open scorer dashboard', icon: '🎯', primary: true });
-  if (role === 'organizer' || role === 'admin') actions.push({ to: '/tournaments?mine=1', label: 'Manage tournaments', icon: '🏆', primary: true });
-  if (role === 'coach' || role === 'admin') actions.push({ to: '/teams?mine=1', label: 'My teams', icon: '👥', primary: true });
-  actions.push({ to: '/tournaments', label: 'Explore tournaments', icon: '🔎', primary: actions.length === 0 });
+  if (role === 'scorer' || role === 'admin') actions.push({ to: '/score', label: 'Open scorer desk', icon: 'whistle', primary: true });
+  if (role === 'organizer' || role === 'admin') actions.push({ to: '/tournaments?mine=1', label: 'Manage tournaments', icon: 'trophy', primary: true });
+  if (role === 'coach' || role === 'admin') actions.push({ to: '/teams?mine=1', label: 'My teams', icon: 'users', primary: true });
+  actions.push({ to: '/tournaments', label: 'Explore tournaments', icon: 'search', primary: actions.length === 0 });
   return actions;
 }
 
@@ -31,16 +33,10 @@ function QuickActions({ role }) {
   return (
     <nav aria-label="Quick actions" className="flex flex-wrap gap-2" data-testid="quick-actions">
       {actions.map((a) => (
-        <Link
-          key={a.to}
-          to={a.to}
-          className={`inline-flex min-h-[44px] items-center gap-2 rounded-lg px-4 text-sm font-semibold transition-colors ${
-            a.primary ? 'bg-accent-500 text-white hover:bg-accent-400' : 'border border-border-strong bg-bg-surface text-text-primary hover:bg-bg-elevated'
-          }`}
-        >
-          <span aria-hidden="true">{a.icon}</span>
+        <Button key={a.to} to={a.to} variant={a.primary ? 'primary' : 'secondary'}>
+          <Icon name={a.icon} size={16} />
           {a.label}
-        </Link>
+        </Button>
       ))}
     </nav>
   );
@@ -53,9 +49,7 @@ export default function Dashboard() {
   const stats = useStats();
   const matches = useMatches();
   const badges = useBadges();
-  const leaderboard = useLeaderboard(
-    user?.community_id ? { community: user.community_id, nearby: 1 } : { nearby: 1 }
-  );
+  const leaderboard = useLeaderboard(user?.community_id ? { community: user.community_id, nearby: 1 } : { nearby: 1 });
 
   const loading = stats.isLoading || matches.isLoading || badges.isLoading;
 
@@ -67,63 +61,54 @@ export default function Dashboard() {
   const incompleteProfile = user && !user.profile_complete;
 
   return (
-    <>
-      <AppHeader
-        right={<Button size="sm" onClick={() => setRecordOpen(true)}>+ Record Match</Button>}
-      />
-      <main className="mx-auto max-w-6xl space-y-6 px-4 py-8">
-        {user ? <QuickActions role={user.role} /> : null}
-        {loading || !metrics ? (
-          <div className="py-20 text-center text-text-muted">Loading your dashboard…</div>
-        ) : (
-          <>
-            <DashboardHeader user={user} rank={rank} movement={myEntry?.movement} />
+    <PageShell
+      headerRight={
+        <Button size="sm" variant="secondary" className="hidden sm:inline-flex" onClick={() => setRecordOpen(true)}>
+          <Icon name="plus" size={16} /> Record match
+        </Button>
+      }
+      className="space-y-6"
+    >
+      {user ? <QuickActions role={user.role} /> : null}
+      {loading || !metrics ? (
+        <LoadingBlock label="Loading your dashboard…" variant="cards" count={4} />
+      ) : (
+        <>
+          <DashboardHeader user={user} rank={rank} movement={myEntry?.movement} />
 
-            {incompleteProfile && (
-              <EmptyState
-                icon="📸"
-                headline="Complete Your Volleyball Profile"
-                copy="Add your photo and preferred position to build trust and earn recognition."
-                ctaLabel="Complete Profile"
-                onCta={() => (window.location.href = '/onboarding')}
-              />
-            )}
+          {incompleteProfile && <EmptyState icon="edit" headline="Complete your volleyball profile" copy="Add your photo and preferred position to build trust and earn recognition." ctaLabel="Complete profile" ctaTo="/onboarding" compact />}
 
-            <SummaryCards user={user} metrics={metrics} rank={rank} badgeCount={earnedBadges} />
+          <SummaryCards user={user} metrics={metrics} rank={rank} badgeCount={earnedBadges} />
 
-            <ScoredStatsSection userId={user.id} />
+          <ScoredStatsSection userId={user.id} />
 
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-              <div className="space-y-6 lg:col-span-2">
-                <PerformanceSection stats={stats.data} rank={rank} />
-                <section>
-                  <div className="mb-3 flex items-center justify-between">
-                    <h2 className="font-display text-xl font-bold">Match History</h2>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div className="space-y-6 lg:col-span-2">
+              <PerformanceSection stats={stats.data} rank={rank} />
+              <section>
+                <SectionHeader
+                  title="Self-reported matches"
+                  action={
                     <Button size="sm" variant="secondary" onClick={() => setRecordOpen(true)}>
-                      + Add Match
+                      <Icon name="plus" size={14} /> Add match
                     </Button>
-                  </div>
-                  <MatchHistory matches={matches.data || []} onRecord={() => setRecordOpen(true)} />
-                </section>
-                <RecognitionCenter badges={badges.data || []} onRecord={() => setRecordOpen(true)} />
-              </div>
-
-              <div className="space-y-6">
-                <SkillStats metrics={metrics} />
-                <LeaderboardWidget entries={leaderboard.data?.entries} />
-                <UpcomingGames />
-                <p className="text-center text-sm text-text-muted">
-                  <Link to="/" className="hover:text-text-primary">
-                    ← Back to home
-                  </Link>
-                </p>
-              </div>
+                  }
+                />
+                <MatchHistory matches={matches.data || []} onRecord={() => setRecordOpen(true)} />
+              </section>
+              <RecognitionCenter badges={badges.data || []} onRecord={() => setRecordOpen(true)} />
             </div>
-          </>
-        )}
-      </main>
+
+            <div className="space-y-6">
+              <UpcomingGames />
+              <SkillStats metrics={metrics} />
+              <LeaderboardWidget entries={leaderboard.data?.entries} />
+            </div>
+          </div>
+        </>
+      )}
 
       <RecordMatchModal open={recordOpen} onClose={() => setRecordOpen(false)} />
-    </>
+    </PageShell>
   );
 }

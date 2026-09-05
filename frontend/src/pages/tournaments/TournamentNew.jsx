@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageShell from '../../components/ui/PageShell.jsx';
-import Field from '../../components/ui/Field.jsx';
+import Field, { Checkbox } from '../../components/ui/Field.jsx';
 import Button from '../../components/Button.jsx';
 import Card from '../../components/Card.jsx';
 import { useToast } from '../../components/ui/ToastProvider.jsx';
@@ -36,12 +36,21 @@ const INITIAL = {
   division_name: 'Open',
 };
 
-function Section({ title, hint, children }) {
+function Section({ step, title, hint, children }) {
   return (
-    <Card className="p-5">
-      <h2 className="font-display text-lg font-bold">{title}</h2>
-      {hint ? <p className="mt-1 text-sm text-text-secondary">{hint}</p> : null}
-      <div className="mt-4 grid gap-4 sm:grid-cols-2">{children}</div>
+    <Card padding as="section" aria-labelledby={`step-${step}`}>
+      <div className="flex items-start gap-3">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-brand-500 font-display text-base font-bold text-brand-950" aria-hidden="true">
+          {step}
+        </span>
+        <div>
+          <h2 id={`step-${step}`} className="font-display text-xl font-bold leading-none">
+            {title}
+          </h2>
+          {hint ? <p className="mt-1 text-sm text-text-secondary">{hint}</p> : null}
+        </div>
+      </div>
+      <div className="mt-5 grid gap-4 sm:grid-cols-2">{children}</div>
     </Card>
   );
 }
@@ -108,7 +117,7 @@ export default function TournamentNew() {
       };
       const t = await tournamentsApi.create(body);
       invalidate('tournaments');
-      toast('Tournament created', { tone: 'success', icon: '🏆' });
+      toast('Tournament created', { tone: 'success' });
       navigate(`/tournaments/${t.id}/manage`);
     } catch (err) {
       toast(errorMessage(err, 'Could not create tournament'), { tone: 'error', duration: 4000 });
@@ -118,9 +127,9 @@ export default function TournamentNew() {
   };
 
   return (
-    <PageShell title="Create tournament" subtitle="Set the format, courts and scoring rules. You can change all of this later from the manage page.">
+    <PageShell title="Create tournament" subtitle="Set the format, courts and scoring rules. You can change all of this later from the manage page." back={{ to: '/tournaments?mine=1', label: 'My tournaments' }}>
       <form onSubmit={submit} noValidate className="mx-auto max-w-3xl space-y-5">
-        <Section title="Basics">
+        <Section step={1} title="Basics">
           <Field label="Name" required value={form.name} onChange={set('name')} error={errors.name} placeholder="Summer Classic 2026" className="sm:col-span-2" />
           <Field label="Description" as="textarea" rows={3} value={form.description} onChange={set('description')} className="sm:col-span-2" placeholder="Who it is for, entry fee, prizes…" />
           <Field label="Start date" type="date" value={form.starts_on} onChange={set('starts_on')} />
@@ -137,20 +146,17 @@ export default function TournamentNew() {
           <Field label="Courts" type="number" min={0} max={20} value={form.courts} onChange={set('courts')} error={errors.courts} hint="Named Court 1, Court 2… — rename them later." />
         </Section>
 
-        <Section title="Format" hint="How the first division is played. Extra divisions can use a different format.">
+        <Section step={2} title="Format" hint="How the first division is played. Extra divisions can use a different format.">
           <fieldset className="sm:col-span-2">
             <legend className="sr-only">Tournament format</legend>
             <div className="grid gap-2 sm:grid-cols-2">
               {Object.entries(TOURNAMENT_FORMAT_LABELS).map(([k, label]) => {
                 const active = form.format === k;
                 return (
-                  <label
-                    key={k}
-                    className={`flex min-h-[44px] cursor-pointer gap-3 rounded-lg border p-3 transition-colors ${active ? 'border-accent-500 bg-accent-500/10' : 'border-border-default bg-bg-surface hover:border-border-strong'}`}
-                  >
+                  <label key={k} className={`flex min-h-11 cursor-pointer gap-3 rounded-md border p-3 transition-colors ${active ? 'border-accent-500 bg-accent-500/10 ring-1 ring-accent-500/40' : 'border-border-default bg-bg-surface hover:border-border-strong'}`}>
                     <input type="radio" name="format" value={k} checked={active} onChange={set('format')} className="mt-1 accent-accent-500" />
                     <span>
-                      <span className="block font-semibold text-text-primary">{label}</span>
+                      <span className="block font-display text-base font-bold uppercase tracking-wide text-text-primary">{label}</span>
                       <span className="block text-xs text-text-secondary">{FORMAT_HELP[k]}</span>
                     </span>
                   </label>
@@ -161,52 +167,37 @@ export default function TournamentNew() {
           {isPool ? (
             <>
               <Field label="Number of pools" type="number" min={1} max={16} value={form.pools} onChange={set('pools')} error={errors.pools} />
-              <Field
-                label="Teams advancing per pool"
-                type="number"
-                min={1}
-                max={8}
-                value={form.advance}
-                onChange={set('advance')}
-                error={errors.advance}
-                hint={form.format === 'pool_play' ? 'Used for final ranking across pools.' : 'These teams go into the knockout bracket.'}
-              />
+              <Field label="Teams advancing per pool" type="number" min={1} max={8} value={form.advance} onChange={set('advance')} error={errors.advance} hint={form.format === 'pool_play' ? 'Used for final ranking across pools.' : 'These teams go into the knockout bracket.'} />
             </>
           ) : null}
         </Section>
 
-        <Section title="Scoring rules" hint="Applied to every match unless a division overrides them.">
-          <div className="flex flex-wrap gap-2 sm:col-span-2" role="group" aria-label="Scoring presets">
+        <Section step={3} title="Scoring rules" hint="Applied to every match unless a division overrides them.">
+          <div className="flex flex-wrap items-center gap-2 sm:col-span-2" role="group" aria-label="Scoring presets">
             {Object.entries(PRESETS).map(([k, p]) => (
-              <Button key={k} type="button" variant={activePreset === k ? 'primary' : 'secondary'} aria-pressed={activePreset === k} className="min-h-[44px]" onClick={() => applyPreset(p)}>
+              <Button key={k} type="button" variant={activePreset === k ? 'primary' : 'secondary'} aria-pressed={activePreset === k} onClick={() => applyPreset(p)}>
                 {p.label}
               </Button>
             ))}
-            <span className="self-center text-xs text-text-muted">{activePreset ? `${PRESETS[activePreset].label}, sets to ${form.setPoints}, deciding set to ${form.decidingSetPoints}` : 'Custom rules'}</span>
+            <span className="text-xs text-text-muted">{activePreset ? `${PRESETS[activePreset].label}, sets to ${form.setPoints}, deciding set to ${form.decidingSetPoints}` : 'Custom rules'}</span>
           </div>
           <Field label="Sets to win" type="number" min={1} max={5} value={form.setsToWin} onChange={set('setsToWin')} error={errors.setsToWin} />
           <Field label="Points per set" type="number" min={1} max={99} value={form.setPoints} onChange={set('setPoints')} error={errors.setPoints} />
           <Field label="Deciding set points" type="number" min={1} max={99} value={form.decidingSetPoints} onChange={set('decidingSetPoints')} error={errors.decidingSetPoints} />
           <Field label="Point cap (optional)" type="number" min={0} max={199} value={form.pointCap} onChange={set('pointCap')} error={errors.pointCap} placeholder="none" hint="Set ends at this score even without a two-point lead." />
-          <label className="flex min-h-[44px] items-center gap-3 text-sm sm:col-span-2">
-            <input type="checkbox" checked={form.winByTwo} onChange={set('winByTwo')} className="h-5 w-5 accent-accent-500" />
-            <span className="font-semibold text-text-secondary">Must win by two points</span>
-          </label>
+          <Checkbox className="sm:col-span-2" label="Must win by two points" checked={form.winByTwo} onChange={set('winByTwo')} />
         </Section>
 
-        <Section title="Registration">
+        <Section step={4} title="Registration">
           <Field label="First division name" value={form.division_name} onChange={set('division_name')} hint='Teams register into this division, e.g. "Open", "Women A".' />
-          <label className="flex min-h-[44px] items-center gap-3 self-end text-sm">
-            <input type="checkbox" checked={form.registration_open} onChange={set('registration_open')} className="h-5 w-5 accent-accent-500" />
-            <span className="font-semibold text-text-secondary">Registration open — coaches can request a spot</span>
-          </label>
+          <Checkbox className="self-end" label="Registration open" hint="Coaches can request a spot from the public page." checked={form.registration_open} onChange={set('registration_open')} />
         </Section>
 
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          <Button type="button" variant="ghost" className="min-h-[44px]" onClick={() => navigate('/tournaments?mine=1')}>
+        <div className="sticky bottom-0 -mx-4 flex flex-wrap items-center justify-end gap-2 border-t border-border-default bg-bg-page/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
+          <Button type="button" variant="ghost" onClick={() => navigate('/tournaments?mine=1')}>
             Cancel
           </Button>
-          <Button type="submit" size="lg" disabled={saving} className="min-h-[48px]">
+          <Button type="submit" size="lg" disabled={saving}>
             {saving ? 'Creating…' : 'Create tournament'}
           </Button>
         </div>

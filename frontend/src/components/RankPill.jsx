@@ -4,13 +4,13 @@ const MOVEMENT = {
   same: { glyph: '–', cls: 'text-text-muted' },
 };
 
-export default function RankPill({ rank, movement = 'same' }) {
+export default function RankPill({ rank, movement = 'same', className = '' }) {
   const m = MOVEMENT[movement] || MOVEMENT.same;
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-bg-elevated px-3 py-1 text-sm font-semibold text-text-primary">
+    <span className={`inline-flex items-center gap-1 rounded-full bg-bg-elevated px-2.5 py-0.5 font-display text-sm font-bold tabular-nums text-text-primary ${className}`}>
       <span className="text-text-muted">#</span>
       {rank}
-      <span className={`text-xs ${m.cls}`} aria-label={`moved ${movement}`}>
+      <span className={`text-[10px] ${m.cls}`} aria-label={`moved ${movement}`}>
         {m.glyph}
       </span>
     </span>

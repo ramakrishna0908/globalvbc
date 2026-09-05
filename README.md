@@ -22,7 +22,7 @@ keeps working when the gym Wi-Fi drops, never loses an event, and needs no typin
 | Layer | Tech |
 |---|---|
 | Shared engine | `shared/engine` — pure JS (JSDoc-typed, `tsc --checkJs`): match reducer, stats, rating v2, tournament formats |
-| Frontend | React 18, Vite, Tailwind v3, react-router v6, @tanstack/react-query, recharts, vitest + Testing Library |
+| Frontend | React 18, Vite, Tailwind v3 (token-driven design system — see [docs/design/DESIGN_SYSTEM.md](docs/design/DESIGN_SYSTEM.md)), react-router v6, @tanstack/react-query, recharts, vitest + Testing Library, Playwright + axe-core |
 | Backend | Express 4, PostgreSQL (pg), JWT + bcrypt, helmet, rate-limit, vitest + supertest |
 | Deploy | Single Vercel project: SPA + Express as one serverless function (`api/index.js`) |
 
@@ -77,7 +77,13 @@ npm test                        # root: engine unit tests + backend integration 
 npm run typecheck               # JSDoc type check of the shared engine
 cd backend  && npm test         # needs TEST_DATABASE_URL (default postgresql://localhost/globalvbc_test) migrated: DATABASE_URL=… node migrate.js
 cd frontend && npm test
+cd frontend && npm run test:e2e   # Playwright: WCAG 2.2 AA (axe), responsive, role workflows — needs the seeded backend on :4000
+cd frontend && npm run capture    # before/after screenshots of every screen → docs/design/screenshots/after
 ```
+
+The UI follows a centralised design system (tokens in `frontend/src/index.css`, primitives in
+`frontend/src/components/ui`). Audit, decisions and verification results:
+[docs/design/UI_AUDIT.md](docs/design/UI_AUDIT.md).
 
 Scorer usability tests (`frontend/src/pages/scorer/LiveScoring.test.jsx`) assert the spec targets:
 point ≤ 1 tap, dig/spike ≤ 2 taps, correction ≤ 1 tap, offline scoring loses nothing and syncs

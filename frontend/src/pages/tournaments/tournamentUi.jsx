@@ -1,42 +1,19 @@
 import { useEffect, useState } from 'react';
+import StatusBadge, { LiveCount, TOURNAMENT_STATUS } from '../../components/ui/StatusBadge.jsx';
 import { formatDate } from '../../lib/format.js';
 
 /** Shared bits for the tournament + team pages. */
 
-const STATUS = {
-  draft: { label: 'Draft', cls: 'bg-bg-elevated text-text-secondary border border-border-strong' },
-  published: { label: 'Upcoming', cls: 'bg-accent-500/15 text-accent-400' },
-  live: { label: 'Live', cls: 'bg-status-danger text-white motion-safe:animate-pulse' },
-  completed: { label: 'Completed', cls: 'bg-status-success/20 text-status-success' },
-  cancelled: { label: 'Cancelled', cls: 'bg-bg-elevated text-text-muted line-through' },
-};
-
-export function TournamentStatusPill({ status, className = '' }) {
-  const s = STATUS[status] || { label: status, cls: 'bg-bg-elevated text-text-secondary' };
-  return <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-black uppercase tracking-wider ${s.cls} ${className}`}>{s.label}</span>;
+export function TournamentStatusPill({ status, className = '', size = 'md' }) {
+  return <StatusBadge status={TOURNAMENT_STATUS[status] || status} size={size} className={className} />;
 }
 
-export function LiveBadge({ count }) {
-  if (!count) return null;
-  return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-status-danger/15 px-2 py-0.5 text-[11px] font-black uppercase tracking-wider text-status-danger">
-      <span className="relative flex h-2 w-2" aria-hidden="true">
-        <span className="absolute inline-flex h-full w-full rounded-full bg-status-danger opacity-75 motion-safe:animate-ping" />
-        <span className="relative inline-flex h-2 w-2 rounded-full bg-status-danger" />
-      </span>
-      Live · {count}
-    </span>
-  );
+export function LiveBadge({ count, className = '' }) {
+  return <LiveCount count={count} className={className} />;
 }
 
-export function RegistrationStatusPill({ status }) {
-  const map = {
-    pending: 'bg-status-warning/20 text-status-warning',
-    approved: 'bg-status-success/20 text-status-success',
-    rejected: 'bg-status-danger/15 text-status-danger',
-    withdrawn: 'bg-bg-elevated text-text-muted line-through',
-  };
-  return <span className={`rounded-full px-2 py-0.5 text-[11px] font-black uppercase tracking-wider ${map[status] || 'bg-bg-elevated text-text-secondary'}`}>{status}</span>;
+export function RegistrationStatusPill({ status, size = 'sm' }) {
+  return <StatusBadge status={status} size={size} />;
 }
 
 export const FORMAT_HELP = {

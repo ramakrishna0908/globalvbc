@@ -1,18 +1,21 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Source+Sans+3:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* ============================================================
-   GlobalVBC hybrid design tokens
-   Foundation: LocalSportsClub gold/amber + warm cream surfaces.
-   Hybrid:     electric-blue accent for CTAs/progress; violet tertiary.
-   Dark mode is the default; .light overrides for light mode.
+   GlobalVBC design tokens
+   ------------------------------------------------------------
+   One source of truth for colour, type, radius, shadow and
+   spacing. Tailwind reads every colour through rgb(var(--x))
+   so `bg-bg-card`, `text-brand-400` … work in both themes.
+
+   Palette: "court navy" neutrals, gold brand (ratings, champions,
+   Team B), court blue accent (actions, Team A), one live-red.
+   Dark is the default; `.light` on <html> flips the theme.
    ============================================================ */
 
 :root {
-  /* Brand (gold/amber) — reserved for ratings & badges */
+  /* ---- brand gold — ratings, badges, champions, team B ---- */
   --brand-50: 253 248 239;
   --brand-100: 249 237 207;
   --brand-200: 242 216 158;
@@ -23,115 +26,150 @@
   --brand-700: 128 88 24;
   --brand-800: 90 64 32;
   --brand-900: 58 40 16;
-  --brand-950: 26 20 16;
+  --brand-950: 20 16 10;
 
-  /* Accent (electric blue) — primary CTAs, progress, energy */
+  /* ---- accent court blue — primary actions, links, team A ---- */
+  --accent-300: 147 197 253;
   --accent-400: 96 165 250;
   --accent-500: 37 99 235;
   --accent-600: 29 78 216;
+  --accent-700: 30 64 175;
 
-  /* Tertiary (violet) — sparingly */
-  --violet-400: 167 139 250;
-  --violet-500: 139 92 246;
-  --violet-600: 124 58 237;
-
-  /* Surfaces (dark default) */
-  --surface-0: 18 16 16;
-  --surface-50: 26 22 20;
-  --surface-100: 30 26 22;
-  --surface-200: 42 37 32;
-  --surface-300: 58 53 48;
-  --surface-400: 74 66 56;
-  --surface-500: 107 97 85;
-  --surface-600: 138 126 107;
-  --surface-700: 168 152 128;
-  --surface-800: 196 181 160;
-  --surface-900: 245 240 232;
+  /* ---- neutral surfaces (dark) ---- */
+  --surface-0: 10 15 26;
+  --surface-50: 15 22 38;
+  --surface-100: 20 28 46;
+  --surface-200: 30 41 66;
+  --surface-300: 45 59 88;
+  --surface-400: 66 82 114;
+  --surface-500: 96 112 146;
+  --surface-600: 143 158 188;
+  --surface-700: 173 186 210;
+  --surface-800: 203 212 228;
+  --surface-900: 243 246 251;
 
   --bg-page: var(--surface-0);
-  --bg-card: var(--surface-100);
   --bg-surface: var(--surface-50);
+  --bg-card: var(--surface-100);
   --bg-elevated: var(--surface-200);
+  --bg-inverse: var(--surface-900);
 
   --text-primary: var(--surface-900);
   --text-secondary: var(--surface-800);
   --text-muted: var(--surface-600);
-  --text-inverse: var(--brand-950);
-
-  --border-default: var(--surface-200);
-  --border-strong: var(--surface-300);
-
-  --action-primary: var(--accent-500);
-  --action-primary-hover: var(--accent-400);
-
-  --status-success: 74 222 128;
-  --status-warning: 251 191 36;
-  --status-active: 96 165 250;
-  --status-danger: 248 113 113;
-
-  /* Team colours for scoring (A = electric blue, B = gold) */
-  --team-a: 59 130 246;
-  --team-b: 232 192 106;
-}
-
-.light {
-  --brand-50: 26 20 16;
-  --brand-100: 58 40 16;
-  --brand-200: 90 64 32;
-  --brand-300: 128 88 24;
-  --brand-400: 160 112 26;
-  --brand-500: 192 138 34;
-  --brand-600: 212 162 62;
-  --brand-700: 232 192 106;
-  --brand-800: 242 216 158;
-  --brand-900: 249 237 207;
-  --brand-950: 253 248 239;
-
-  --accent-400: 29 78 216;
-  --accent-500: 37 99 235;
-  --accent-600: 96 165 250;
-
-  --violet-400: 124 58 237;
-  --violet-500: 139 92 246;
-  --violet-600: 167 139 250;
-
-  --surface-0: 250 248 245;
-  --surface-50: 245 240 232;
-  --surface-100: 239 233 223;
-  --surface-200: 224 216 204;
-  --surface-300: 207 197 181;
-  --surface-400: 168 152 128;
-  --surface-500: 138 126 107;
-  --surface-600: 107 97 85;
-  --surface-700: 74 66 56;
-  --surface-800: 42 37 32;
-  --surface-900: 26 22 20;
-
-  --bg-page: var(--surface-0);
-  --bg-card: var(--surface-100);
-  --bg-surface: var(--surface-50);
-  --bg-elevated: var(--surface-200);
-
-  --text-primary: var(--surface-900);
-  --text-secondary: var(--surface-700);
-  --text-muted: var(--surface-600);
-  --text-inverse: var(--brand-950);
+  --text-inverse: var(--surface-0);
 
   --border-default: var(--surface-200);
   --border-strong: var(--surface-300);
 
   --action-primary: var(--accent-500);
   --action-primary-hover: var(--accent-600);
+  --focus-ring: var(--accent-400);
+
+  /* ---- status — text-safe on the page background ---- */
+  --status-success: 74 222 128;
+  --status-warning: 251 191 36;
+  --status-danger: 248 113 113;
+  --status-active: 96 165 250;
+  /* solid fills that carry white text (LIVE pill, destructive buttons) */
+  --status-live: 225 29 72;
+  --status-danger-solid: 220 38 38;
+  --status-success-solid: 21 128 61;
+
+  /* ---- team colours (FIVB blue / yellow) ---- */
+  --team-a: 59 130 246;
+  --team-b: 232 192 106;
+  --team-a-ink: 255 255 255;
+  --team-b-ink: 20 16 10;
+  /* solid fills that carry ink (point buttons): slightly deeper than the accent bars */
+  --team-a-solid: 37 99 235;
+  --team-b-solid: 232 192 106;
+
+  /* ---- shape & depth ---- */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 0 0 1px rgb(255 255 255 / 0.02) inset;
+  --shadow-elevated: 0 16px 40px -16px rgb(0 0 0 / 0.6), 0 2px 6px rgb(0 0 0 / 0.3);
+  --shadow-glow-accent: 0 10px 30px -10px rgb(var(--accent-500) / 0.7);
+
+  /* ---- chart palette (read by useChartTheme) ---- */
+  --chart-grid: 45 59 88;
+  --chart-axis: 143 158 188;
+  --chart-tooltip-bg: 20 28 46;
+  --chart-series-1: var(--brand-400);
+  --chart-series-2: var(--accent-400);
+  --chart-series-3: 45 212 191;
+
+  color-scheme: dark;
+}
+
+.light {
+  --brand-50: 20 16 10;
+  --brand-100: 58 40 16;
+  --brand-200: 90 64 32;
+  --brand-300: 128 88 24;
+  --brand-400: 133 91 16;
+  --brand-500: 176 122 26;
+  --brand-600: 212 162 62;
+  --brand-700: 232 192 106;
+  --brand-800: 242 216 158;
+  --brand-900: 249 237 207;
+  /* ink on gold fills stays dark in both themes (gold + white fails AA) */
+  --brand-950: 20 16 10;
+
+  --accent-300: 30 64 175;
+  --accent-400: 29 78 216;
+  --accent-500: 37 99 235;
+  --accent-600: 29 78 216;
+  --accent-700: 147 197 253;
+
+  --surface-0: 246 248 251;
+  --surface-50: 240 244 249;
+  --surface-100: 255 255 255;
+  --surface-200: 226 232 240;
+  --surface-300: 203 213 225;
+  --surface-400: 148 163 184;
+  --surface-500: 100 116 139;
+  --surface-600: 71 85 105;
+  --surface-700: 51 65 85;
+  --surface-800: 30 41 59;
+  --surface-900: 15 23 42;
+
+  --text-inverse: 255 255 255;
 
   --status-success: 22 101 52;
   --status-warning: 146 64 14;
-  --status-active: 29 78 216;
   --status-danger: 185 28 28;
+  --status-active: 29 78 216;
+  --status-live: 190 18 60;
+  --status-danger-solid: 185 28 28;
+  --status-success-solid: 21 128 61;
 
   --team-a: 37 99 235;
-  --team-b: 160 112 26;
+  --team-b: 133 91 16;
+  --team-a-ink: 255 255 255;
+  --team-b-ink: 255 255 255;
+  --team-a-solid: 37 99 235;
+  --team-b-solid: 133 91 16;
+
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.06), 0 1px 3px rgb(15 23 42 / 0.08);
+  --shadow-elevated: 0 16px 40px -16px rgb(15 23 42 / 0.25), 0 2px 6px rgb(15 23 42 / 0.08);
+
+  --chart-grid: 226 232 240;
+  --chart-axis: 100 116 139;
+  --chart-tooltip-bg: 255 255 255;
+  --chart-series-1: 133 91 16;
+  --chart-series-2: 37 99 235;
+  --chart-series-3: 13 148 136;
+
+  color-scheme: light;
 }
 
+/* ============================================================
+   Base
+   ============================================================ */
 html,
 body,
 #root {
@@ -142,20 +180,60 @@ body {
   margin: 0;
   background: rgb(var(--bg-page));
   color: rgb(var(--text-primary));
-  font-family: 'Source Sans 3', 'Helvetica Neue', sans-serif;
+  font-family: 'Barlow', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'kern', 'liga';
 }
 
 h1,
 h2,
 h3,
 .font-display {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: 'Barlow Condensed', 'Barlow', 'Arial Narrow', sans-serif;
+  letter-spacing: 0.005em;
+  font-feature-settings: 'tnum', 'lnum';
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+/* Every number that sits in a column should line up. */
+.tabular-nums,
+table td,
+table th {
+  font-variant-numeric: tabular-nums lining-nums;
 }
 
 :focus-visible {
-  outline: 2px solid rgb(var(--accent-500));
+  outline: 3px solid rgb(var(--focus-ring));
   outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+::selection {
+  background: rgb(var(--accent-500) / 0.35);
+}
+
+/* Skip link for keyboard users */
+.skip-link {
+  position: absolute;
+  left: 0.75rem;
+  top: -100px;
+  z-index: 100;
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius-md);
+  background: rgb(var(--accent-500));
+  color: white;
+  font-weight: 700;
+}
+.skip-link:focus {
+  top: 0.75rem;
 }
 
 /* Scoring surfaces: no accidental text selection / long-press callouts on tablets */
@@ -166,11 +244,171 @@ h3,
   touch-action: manipulation;
 }
 
+/* ============================================================
+   Component classes — shared visual language, no duplication
+   ============================================================ */
+@layer components {
+  /* Small caps section label ("STANDINGS", "ON COURT") */
+  .eyebrow {
+    @apply font-display text-xs font-bold uppercase tracking-[0.18em] text-text-muted;
+  }
+
+  /* Big numbers: scores, ratings, stat tiles */
+  .num-display {
+    @apply font-display font-bold tabular-nums leading-none;
+  }
+
+  /* Table primitives */
+  .table-wrap {
+    @apply overflow-x-auto rounded-lg border border-border-default bg-bg-card;
+    scrollbar-width: thin;
+    /* Layout containment: without it Chrome for Android derives the page's
+       minimum zoom-out width from form controls inside the scroller, so a
+       wide table with <select>/<input> cells made the whole page zoom out. */
+    contain: layout;
+  }
+  .table {
+    @apply w-full text-sm;
+  }
+  .table thead th {
+    @apply whitespace-nowrap bg-bg-surface px-3 py-2 text-left font-display text-xs font-bold uppercase tracking-wider text-text-muted;
+  }
+  .table tbody td {
+    @apply px-3 py-2 align-middle;
+  }
+  .table tbody tr {
+    @apply border-t border-border-default;
+  }
+  .table tbody tr:hover {
+    background: rgb(var(--bg-elevated) / 0.5);
+  }
+  .table .sticky-col {
+    @apply sticky left-0 z-[1] bg-bg-card;
+    box-shadow: 1px 0 0 rgb(var(--border-default));
+  }
+  .table thead .sticky-col {
+    @apply bg-bg-surface;
+  }
+  .table tbody tr:hover .sticky-col {
+    background: rgb(var(--bg-card));
+  }
+  .table .cell-num {
+    @apply text-right tabular-nums;
+  }
+
+  /* Form control */
+  .input {
+    @apply block w-full min-h-11 rounded-md border border-border-strong bg-bg-surface px-3 py-2 text-[15px] text-text-primary placeholder:text-text-muted transition-colors;
+  }
+  .input:focus {
+    @apply border-accent-500 outline-none ring-2 ring-accent-500/30;
+  }
+  .input:disabled {
+    @apply cursor-not-allowed opacity-60;
+  }
+  .input[aria-invalid='true'] {
+    @apply border-status-danger;
+  }
+  select.input {
+    @apply pr-9;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238f9ebc' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.7rem center;
+  }
+  /* Required marker rendered via CSS so it never pollutes the accessible label */
+  .req::after {
+    content: '*';
+    @apply ml-0.5 text-status-danger;
+  }
+  .checkbox {
+    @apply h-5 w-5 rounded border-border-strong accent-accent-500;
+  }
+
+  /* Link inside prose/tables */
+  .link {
+    @apply font-semibold text-accent-400 underline-offset-2 hover:underline;
+  }
+
+  /* Team colour bar (left edge of a row/card) */
+  .team-bar-a {
+    box-shadow: inset 4px 0 0 rgb(var(--team-a));
+  }
+  .team-bar-b {
+    box-shadow: inset 4px 0 0 rgb(var(--team-b));
+  }
+
+  /* Court-line texture used on hero and empty backdrops */
+  .court-lines {
+    background-image: linear-gradient(to right, rgb(var(--text-primary) / 0.06) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(var(--text-primary) / 0.06) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+  }
+}
+
+/* ============================================================
+   Motion
+   ============================================================ */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes score-pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes shimmer {
+  from {
+    background-position: -200% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, rgb(var(--bg-elevated)) 25%, rgb(var(--border-strong)) 50%, rgb(var(--bg-elevated)) 75%);
+  background-size: 200% 100%;
+  border-radius: var(--radius-sm);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .skeleton {
+    animation: shimmer 1.4s linear infinite;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
   }
 }

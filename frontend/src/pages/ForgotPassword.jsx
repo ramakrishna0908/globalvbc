@@ -4,6 +4,8 @@ import AppHeader from '../components/AppHeader.jsx';
 import Card from '../components/Card.jsx';
 import Button from '../components/Button.jsx';
 import Field from '../components/ui/Field.jsx';
+import Alert from '../components/ui/Alert.jsx';
+import Icon from '../components/ui/Icon.jsx';
 import { authApi } from '../api/endpoints.js';
 
 export default function ForgotPassword() {
@@ -30,45 +32,38 @@ export default function ForgotPassword() {
   return (
     <>
       <AppHeader />
-      <main className="mx-auto max-w-md px-4 py-10 md:py-12">
+      <main id="main" className="mx-auto max-w-md px-4 py-10 md:py-14">
         <Card className="p-6 md:p-8">
-          <h1 className="font-display text-2xl font-bold">Reset your password</h1>
+          <h1 className="font-display text-display-sm font-bold uppercase">Reset your password</h1>
           <p className="mt-1 text-sm text-text-secondary">Enter the email you signed up with and we will create a reset link.</p>
 
           {result ? (
             <div className="mt-6 space-y-4" role="status">
-              <div className="rounded-xl border border-status-success/40 bg-status-success/10 p-4 text-sm text-text-primary">
-                If an account exists, a reset link has been created.
-              </div>
+              <Alert tone="success">If an account exists, a reset link has been created.</Alert>
               {resetHref ? (
-                <div className="rounded-xl border border-status-warning/50 bg-status-warning/10 p-4 text-sm">
-                  <p className="font-semibold text-text-primary">Development shortcut</p>
-                  <p className="mt-1 text-text-secondary">Email delivery is not configured in this environment, so here is your reset link directly:</p>
-                  <Link to={resetHref} className="mt-3 inline-flex min-h-[44px] items-center font-semibold text-accent-400 hover:underline" data-testid="dev-reset-link">
-                    Open reset link →
+                <Alert tone="warning" title="Development shortcut">
+                  <p>Email delivery is not configured in this environment, so here is your reset link directly:</p>
+                  <Link to={resetHref} className="link mt-2 inline-flex min-h-11 items-center gap-1" data-testid="dev-reset-link">
+                    Open reset link <Icon name="arrowRight" size={14} />
                   </Link>
-                </div>
+                </Alert>
               ) : (
                 <p className="text-sm text-text-muted">Check your inbox for the link. It expires in one hour.</p>
               )}
-              <Link to="/login" className="inline-flex min-h-[44px] items-center text-sm font-semibold text-accent-400 hover:underline">
-                ← Back to sign in
+              <Link to="/login" className="link inline-flex min-h-11 items-center gap-1 text-sm">
+                <Icon name="arrowLeft" size={14} /> Back to sign in
               </Link>
             </div>
           ) : (
             <form className="mt-6 space-y-4" onSubmit={onSubmit}>
-              <Field label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required />
-              {error ? (
-                <p role="alert" className="text-sm text-status-danger">
-                  {error}
-                </p>
-              ) : null}
-              <Button type="submit" size="lg" className="min-h-[48px] w-full" disabled={busy || !email}>
+              <Field label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" inputMode="email" required />
+              {error ? <Alert tone="danger">{error}</Alert> : null}
+              <Button type="submit" size="lg" full disabled={busy || !email}>
                 {busy ? 'Please wait…' : 'Create reset link'}
               </Button>
               <p className="text-center text-sm text-text-secondary">
                 Remembered it?{' '}
-                <Link to="/login" className="font-semibold text-accent-400 hover:underline">
+                <Link to="/login" className="link">
                   Sign in
                 </Link>
               </p>

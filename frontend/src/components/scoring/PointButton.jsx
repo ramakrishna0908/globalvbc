@@ -1,8 +1,8 @@
 import { useRef } from 'react';
 
 const TONE = {
-  A: 'bg-team-a text-white hover:bg-team-a/90 active:bg-team-a/80 focus-visible:outline-team-a',
-  B: 'bg-team-b text-brand-950 hover:bg-team-b/90 active:bg-team-b/80 focus-visible:outline-team-b',
+  A: 'bg-team-a-solid text-team-a-ink hover:brightness-110 active:brightness-95 focus-visible:outline-team-a',
+  B: 'bg-team-b-solid text-team-b-ink hover:brightness-110 active:brightness-95 focus-visible:outline-team-b',
 };
 
 /**
@@ -31,10 +31,12 @@ export default function PointButton({ side, label, onPoint, disabled, guardMs = 
       disabled={disabled}
       aria-label={`${label || `Team ${side}`} point`}
       data-testid={`point-${side}`}
-      className={`flex min-h-[96px] w-full min-w-0 select-none flex-col items-center justify-center overflow-hidden rounded-2xl px-2 font-display text-lg font-black uppercase tracking-wide shadow-elevated transition-transform motion-safe:active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 sm:text-2xl md:min-h-[128px] md:text-3xl ${TONE[side]} ${className}`}
+      className={`flex min-h-24 w-full min-w-0 select-none flex-col items-center justify-center overflow-hidden rounded-xl px-3 font-display font-bold uppercase shadow-elevated transition-[transform,filter] motion-safe:active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 md:min-h-32 ${TONE[side]} ${className}`}
     >
-      <span className="text-sm font-semibold uppercase tracking-widest opacity-80">Point</span>
-      <span className="w-full truncate text-center">{label || `Team ${side}`}</span>
+      <span className="flex items-center gap-2 text-sm font-bold tracking-[0.3em]">
+        <span aria-hidden="true">+1</span> Point
+      </span>
+      <span className="w-full truncate text-center text-2xl leading-tight tracking-wide sm:text-3xl md:text-4xl">{label || `Team ${side}`}</span>
     </button>
   );
 }

@@ -4,6 +4,8 @@ import AppHeader from '../components/AppHeader.jsx';
 import Card from '../components/Card.jsx';
 import Button from '../components/Button.jsx';
 import Field from '../components/ui/Field.jsx';
+import Alert from '../components/ui/Alert.jsx';
+import Icon from '../components/ui/Icon.jsx';
 import { authApi } from '../api/endpoints.js';
 import { setToken } from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -43,41 +45,30 @@ export default function ResetPassword() {
   return (
     <>
       <AppHeader />
-      <main className="mx-auto max-w-md px-4 py-10 md:py-12">
+      <main id="main" className="mx-auto max-w-md px-4 py-10 md:py-14">
         <Card className="p-6 md:p-8">
-          <h1 className="font-display text-2xl font-bold">Choose a new password</h1>
+          <h1 className="font-display text-display-sm font-bold uppercase">Choose a new password</h1>
 
           {!token ? (
             <div className="mt-6 space-y-4">
-              <p role="alert" className="rounded-xl border border-status-danger/50 bg-status-danger/10 p-4 text-sm text-text-primary">
-                This reset link is missing its token. Request a new one to continue.
-              </p>
-              <Link to="/forgot-password" className="inline-flex min-h-[44px] items-center font-semibold text-accent-400 hover:underline">
-                Request a new reset link →
+              <Alert tone="danger">This reset link is missing its token. Request a new one to continue.</Alert>
+              <Link to="/forgot-password" className="link inline-flex min-h-11 items-center gap-1">
+                Request a new reset link <Icon name="arrowRight" size={14} />
               </Link>
             </div>
           ) : (
             <form className="mt-6 space-y-4" onSubmit={onSubmit}>
               <Field label="New password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={8} autoComplete="new-password" hint="At least 8 characters." required />
-              <Field
-                label="Confirm password"
-                type="password"
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
-                minLength={8}
-                autoComplete="new-password"
-                error={mismatch ? 'Passwords do not match' : undefined}
-                required
-              />
+              <Field label="Confirm password" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} minLength={8} autoComplete="new-password" error={mismatch ? 'Passwords do not match' : undefined} required />
               {error ? (
-                <div role="alert" className="rounded-xl border border-status-danger/50 bg-status-danger/10 p-3 text-sm text-text-primary">
+                <Alert tone="danger">
                   {error}{' '}
-                  <Link to="/forgot-password" className="font-semibold text-accent-400 hover:underline">
+                  <Link to="/forgot-password" className="link">
                     Request a new link
                   </Link>
-                </div>
+                </Alert>
               ) : null}
-              <Button type="submit" size="lg" className="min-h-[48px] w-full" disabled={busy || mismatch || password.length < 8}>
+              <Button type="submit" size="lg" full disabled={busy || mismatch || password.length < 8}>
                 {busy ? 'Please wait…' : 'Set new password'}
               </Button>
             </form>

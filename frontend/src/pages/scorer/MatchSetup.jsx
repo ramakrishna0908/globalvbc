@@ -6,7 +6,10 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { FORMAT_PRESETS } from '@engine/match.js';
 import PageShell from '../../components/ui/PageShell.jsx';
 import Button from '../../components/Button.jsx';
-import Field from '../../components/ui/Field.jsx';
+import Card from '../../components/Card.jsx';
+import Alert from '../../components/ui/Alert.jsx';
+import Field, { Checkbox } from '../../components/ui/Field.jsx';
+import Icon from '../../components/ui/Icon.jsx';
 import { LoadingBlock, ErrorBlock } from '../../components/ui/Loading.jsx';
 import { useToast } from '../../components/ui/ToastProvider.jsx';
 import { useScoredMatch, useTeams, useTournaments, useTournament, useTeam, useInvalidate } from '../../hooks/queries.js';
@@ -19,10 +22,19 @@ const PRESETS = [
   { key: 'custom', label: 'Custom', hint: 'Set your own rules' },
 ];
 
+function StepLabel({ n, children }) {
+  return (
+    <h2 className="mb-2 flex items-center gap-2">
+      {n ? <span className="flex h-7 w-7 items-center justify-center rounded-md bg-brand-500 font-display text-sm font-bold text-brand-950">{n}</span> : null}
+      <span className="font-display text-xl font-bold uppercase tracking-wide">{children}</span>
+    </h2>
+  );
+}
+
 function Choice({ selected, onClick, children, tone = 'accent', className = '' }) {
   const ring = tone === 'a' ? 'border-team-a bg-team-a/15' : tone === 'b' ? 'border-team-b bg-team-b/15' : 'border-accent-500 bg-accent-500/15';
   return (
-    <button type="button" onClick={onClick} aria-pressed={selected} className={`min-h-[56px] rounded-xl border-2 px-3 text-left font-semibold transition-colors ${selected ? ring : 'border-border-default bg-bg-card hover:border-border-strong'} ${className}`}>
+    <button type="button" onClick={onClick} aria-pressed={selected} className={`min-h-14 rounded-lg border-2 px-3 py-2 text-left font-semibold transition-colors ${selected ? ring : 'border-border-default bg-bg-card hover:border-border-strong'} ${className}`}>
       {children}
     </button>
   );
@@ -37,10 +49,10 @@ function LineupPicker({ side, team, roster, value, onChange }) {
     else if (starters.length < 6) onChange({ starters: [...starters, id], bench });
     else onChange({ starters, bench: [...bench, id] });
   };
-  const tone = side === 'A' ? 'text-team-a' : 'text-team-b';
+  const tone = side === 'A' ? '!text-team-a' : '!text-team-b';
   return (
-    <div className="rounded-2xl border border-border-default bg-bg-card p-3">
-      <div className={`mb-1 text-xs font-black uppercase tracking-[0.2em] ${tone}`}>
+    <Card tone={side.toLowerCase()} className="p-3">
+      <div className={`eyebrow mb-1 ${tone}`}>
         {team?.name || `Team ${side}`} · {starters.length}/6 starters{bench.length ? ` · ${bench.length} bench` : ''}
       </div>
       <p className="mb-2 text-xs text-text-muted">Tap players in serving order (1 = first server). Tap again to move to bench, again to remove.</p>
@@ -48,7 +60,7 @@ function LineupPicker({ side, team, roster, value, onChange }) {
         <p className="text-sm text-text-muted">
           This team has no roster yet.{' '}
           {team ? (
-            <Link to={`/teams/${team.id}`} className="text-accent-400 hover:underline">
+            <Link to={`/teams/${team.id}`} className="link">
               Add players
             </Link>
           ) : null}
@@ -65,23 +77,21 @@ function LineupPicker({ side, team, roster, value, onChange }) {
               onClick={() => toggle(p.id)}
               aria-pressed={si >= 0 || onBench}
               data-testid={`lineup-${side}-${p.id}`}
-              className={`flex min-h-[56px] items-center gap-2 rounded-xl border-2 px-2 text-left text-sm font-semibold ${
-                si >= 0 ? (side === 'A' ? 'border-team-a bg-team-a/15' : 'border-team-b bg-team-b/15') : onBench ? 'border-border-strong bg-bg-elevated text-text-secondary' : 'border-border-default bg-bg-surface'
-              }`}
+              className={`flex min-h-14 items-center gap-2 rounded-lg border-2 px-2 text-left text-sm font-semibold ${si >= 0 ? (side === 'A' ? 'border-team-a bg-team-a/15' : 'border-team-b bg-team-b/15') : onBench ? 'border-border-strong bg-bg-elevated text-text-secondary' : 'border-border-default bg-bg-surface'}`}
             >
-              <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-black ${si >= 0 ? 'bg-text-primary text-bg-page' : 'bg-bg-elevated text-text-muted'}`}>{si >= 0 ? si + 1 : onBench ? 'B' : ''}</span>
+              <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full font-display text-sm font-bold ${si >= 0 ? 'bg-text-primary text-bg-page' : 'bg-bg-elevated text-text-muted'}`}>{si >= 0 ? si + 1 : onBench ? 'B' : ''}</span>
               <span className="min-w-0">
                 <span className="block truncate">
-                  {p.jersey_number != null ? `#${p.jersey_number} ` : ''}
+                  {p.jersey_number != null ? <span className="font-display font-bold">#{p.jersey_number} </span> : ''}
                   {p.name}
                 </span>
-                {p.position ? <span className="block text-[11px] font-normal text-text-muted">{p.position.replace('_', ' ')}</span> : null}
+                {p.position ? <span className="block text-2xs font-normal capitalize text-text-muted">{p.position.replace('_', ' ')}</span> : null}
               </span>
             </button>
           );
         })}
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -169,7 +179,7 @@ export default function MatchSetup() {
       }
       await matchesApi.lineups(match.id, { A: lineupA, B: lineupB });
       invalidate('matches', ['match', String(match.id)]);
-      toast('Lineups saved', { icon: '✓' });
+      toast('Lineups saved');
       navigate(`/score/${match.id}`);
     } catch (err) {
       setError(err.response?.data?.error || 'Could not start the match');
@@ -178,30 +188,52 @@ export default function MatchSetup() {
     }
   }
 
-  if (id && existing.isLoading) return <PageShell title="Match setup"><LoadingBlock /></PageShell>;
-  if (id && existing.isError) return <PageShell title="Match setup"><ErrorBlock error={existing.error} retry={existing.refetch} /></PageShell>;
+  if (id && existing.isLoading)
+    return (
+      <PageShell title="Match setup">
+        <LoadingBlock />
+      </PageShell>
+    );
+  if (id && existing.isError)
+    return (
+      <PageShell title="Match setup">
+        <ErrorBlock error={existing.error} retry={existing.refetch} />
+      </PageShell>
+    );
 
   return (
-    <PageShell title={isAssigned ? 'Confirm lineups' : 'New match'} subtitle={isAssigned ? `${existing.data.team_a_name || existing.data.teams?.A?.name} vs ${existing.data.team_b_name || existing.data.teams?.B?.name}` : 'Pick the teams, the format and the starting six. One screen, then score.'}>
-      <div className="space-y-6">
+    <PageShell
+      back={{ to: '/score', label: 'Scorer desk' }}
+      title={isAssigned ? 'Confirm lineups' : 'New match'}
+      subtitle={isAssigned ? `${existing.data.team_a_name || existing.data.teams?.A?.name} vs ${existing.data.team_b_name || existing.data.teams?.B?.name}` : 'Pick the teams, the format and the starting six. One screen, then score.'}
+    >
+      <div className="space-y-7">
         {!isAssigned ? (
           <>
             <section>
-              <h2 className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-text-muted">1 · Tournament (optional)</h2>
+              <StepLabel n={1}>Tournament (optional)</StepLabel>
               <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-                <Choice selected={!tournamentId} onClick={() => { setTournamentId(''); setCourtId(''); }}>
+                <Choice
+                  selected={!tournamentId}
+                  onClick={() => {
+                    setTournamentId('');
+                    setCourtId('');
+                  }}
+                >
                   Friendly / none
                 </Choice>
                 {(tournaments.data || []).map((t) => (
                   <Choice key={t.id} selected={tournamentId === String(t.id)} onClick={() => setTournamentId(String(t.id))}>
                     <span className="block truncate">{t.name}</span>
-                    <span className="block text-xs font-normal text-text-muted">{t.status} · {t.team_count} teams</span>
+                    <span className="block text-xs font-normal capitalize text-text-muted">
+                      {t.status} · {t.team_count} teams
+                    </span>
                   </Choice>
                 ))}
               </div>
               {tournamentId && tournament.data?.courts?.length ? (
                 <div className="mt-3">
-                  <h3 className="mb-1 text-xs font-semibold text-text-muted">Court</h3>
+                  <h3 className="eyebrow mb-1">Court</h3>
                   <div className="flex flex-wrap gap-2">
                     {tournament.data.courts.map((c) => (
                       <Choice key={c.id} selected={courtId === String(c.id)} onClick={() => setCourtId(String(c.id))} className="min-w-[96px]">
@@ -214,12 +246,12 @@ export default function MatchSetup() {
             </section>
 
             <section>
-              <h2 className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-text-muted">2 · Teams</h2>
+              <StepLabel n={2}>Teams</StepLabel>
               {teams.isLoading ? <LoadingBlock label="Loading teams…" /> : null}
               {!teams.isLoading && !teamList.length ? (
                 <p className="text-sm text-text-secondary">
                   No teams yet.{' '}
-                  <Link to="/teams" className="font-semibold text-accent-400 hover:underline">
+                  <Link to="/teams" className="link">
                     Create a team
                   </Link>{' '}
                   first.
@@ -231,12 +263,23 @@ export default function MatchSetup() {
                   ['B', teamB, setTeamB, teamA],
                 ].map(([side, value, set, other]) => (
                   <div key={side}>
-                    <h3 className={`mb-1 text-xs font-semibold ${side === 'A' ? 'text-team-a' : 'text-team-b'}`}>Team {side}</h3>
+                    <h3 className={`eyebrow mb-1 ${side === 'A' ? '!text-team-a' : '!text-team-b'}`}>Team {side}</h3>
                     <div className="grid max-h-64 grid-cols-2 gap-2 overflow-y-auto pr-1">
                       {teamList.map((t) => (
-                        <Choice key={t.id} tone={side.toLowerCase()} selected={value === String(t.id)} onClick={() => { set(String(t.id)); side === 'A' ? setLineupA({ starters: [], bench: [] }) : setLineupB({ starters: [], bench: [] }); }} className={other === String(t.id) ? 'opacity-40' : ''}>
-                          <span className="block truncate">{t.name}</span>
-                          <span className="block text-xs font-normal text-text-muted">{t.member_count} players · {t.elo}</span>
+                        <Choice
+                          key={t.id}
+                          tone={side.toLowerCase()}
+                          selected={value === String(t.id)}
+                          onClick={() => {
+                            set(String(t.id));
+                            side === 'A' ? setLineupA({ starters: [], bench: [] }) : setLineupB({ starters: [], bench: [] });
+                          }}
+                          className={other === String(t.id) ? 'opacity-40' : ''}
+                        >
+                          <span className="block truncate font-display text-base font-bold uppercase tracking-wide">{t.name}</span>
+                          <span className="block text-xs font-normal text-text-muted">
+                            {t.member_count} players · {t.elo}
+                          </span>
                         </Choice>
                       ))}
                     </div>
@@ -246,11 +289,11 @@ export default function MatchSetup() {
             </section>
 
             <section>
-              <h2 className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-text-muted">3 · Format</h2>
+              <StepLabel n={3}>Format</StepLabel>
               <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
                 {PRESETS.map((p) => (
                   <Choice key={p.key} selected={preset === p.key} onClick={() => setPreset(p.key)}>
-                    <span className="block">{p.label}</span>
+                    <span className="block font-display text-base font-bold uppercase tracking-wide">{p.label}</span>
                     <span className="block text-xs font-normal text-text-muted">{p.hint}</span>
                   </Choice>
                 ))}
@@ -261,9 +304,7 @@ export default function MatchSetup() {
                   <Field label="Set points" type="number" min={1} max={99} value={custom.setPoints} onChange={(e) => setCustom({ ...custom, setPoints: e.target.value })} />
                   <Field label="Deciding set" type="number" min={1} max={99} value={custom.decidingSetPoints} onChange={(e) => setCustom({ ...custom, decidingSetPoints: e.target.value })} />
                   <Field label="Point cap" type="number" min={0} max={199} placeholder="none" value={custom.pointCap} onChange={(e) => setCustom({ ...custom, pointCap: e.target.value })} />
-                  <label className="flex min-h-[44px] items-end gap-2 pb-2 text-sm font-semibold">
-                    <input type="checkbox" className="h-5 w-5" checked={custom.winByTwo} onChange={(e) => setCustom({ ...custom, winByTwo: e.target.checked })} /> Win by two
-                  </label>
+                  <Checkbox className="self-end" label="Win by two" checked={custom.winByTwo} onChange={(e) => setCustom({ ...custom, winByTwo: e.target.checked })} />
                 </div>
               ) : (
                 <p className="mt-2 text-xs text-text-muted">
@@ -275,7 +316,7 @@ export default function MatchSetup() {
         ) : null}
 
         <section>
-          <h2 className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-text-muted">{isAssigned ? 'Starting lineups' : '4 · Starting lineups'}</h2>
+          <StepLabel n={isAssigned ? null : 4}>Starting lineups</StepLabel>
           {!teamA || !teamB ? (
             <p className="text-sm text-text-muted">Pick both teams first.</p>
           ) : (
@@ -286,12 +327,12 @@ export default function MatchSetup() {
           )}
         </section>
 
-        {shortHanded ? <p className="text-sm text-status-warning">⚠ A team has fewer than 6 starters — the match will be recorded as short-handed.</p> : null}
+        {shortHanded ? <Alert tone="warning">A team has fewer than 6 starters — the match will be recorded as short-handed.</Alert> : null}
         {error ? <ErrorBlock error={{ message: error }} /> : null}
 
         <div className="sticky bottom-0 -mx-4 border-t border-border-default bg-bg-page/95 px-4 py-3 backdrop-blur">
-          <Button size="lg" className="min-h-[64px] w-full text-lg" onClick={start} disabled={!ready || busy} data-testid="setup-start">
-            {busy ? 'Saving…' : 'Save lineups & open scoreboard →'}
+          <Button size="xl" full onClick={start} disabled={!ready || busy} data-testid="setup-start">
+            {busy ? 'Saving…' : 'Save lineups & open scoreboard'} <Icon name="arrowRight" size={20} />
           </Button>
         </div>
       </div>

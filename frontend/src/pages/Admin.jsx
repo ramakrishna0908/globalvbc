@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import PageShell from '../components/ui/PageShell.jsx';
-import Tabs from '../components/ui/Tabs.jsx';
+import Tabs, { TabPanel } from '../components/ui/Tabs.jsx';
 import Field, { inputClass } from '../components/ui/Field.jsx';
+import Button from '../components/Button.jsx';
+import Icon from '../components/ui/Icon.jsx';
+import { Table, TableWrap, Th, Td } from '../components/ui/Table.jsx';
 import { LoadingBlock, ErrorBlock } from '../components/ui/Loading.jsx';
 import { useToast } from '../components/ui/ToastProvider.jsx';
 import StatCard from '../components/StatCard.jsx';
@@ -13,6 +16,7 @@ import { useAdminOverview, useAdminUsers, useAdminMatches, useAdminAudit, useInv
 import { adminApi } from '../api/endpoints.js';
 import { ROLE_LABELS, formatDateTime } from '../lib/format.js';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useDebounced } from './tournaments/tournamentUi.jsx';
 
 const ROLES = ['player', 'scorer', 'coach', 'organizer', 'admin'];
 const TABS = [
@@ -21,20 +25,11 @@ const TABS = [
   { key: 'audit', label: 'Audit log' },
 ];
 
-function useDebounced(value, ms = 300) {
-  const [v, setV] = useState(value);
-  useEffect(() => {
-    const t = setTimeout(() => setV(value), ms);
-    return () => clearTimeout(t);
-  }, [value, ms]);
-  return v;
-}
-
 /* ---------------------------------------------------------------- Overview */
 
 function Overview() {
   const q = useAdminOverview();
-  if (q.isLoading) return <LoadingBlock label="Loading overview…" />;
+  if (q.isLoading) return <LoadingBlock label="Loading overview…" variant="cards" count={4} />;
   if (q.isError) return <ErrorBlock error={q.error} retry={() => q.refetch()} />;
   const d = q.data || {};
   const tiles = [
@@ -42,10 +37,10 @@ function Overview() {
     ['Teams', d.teams, 'default'],
     ['Tournaments', d.tournaments, 'default'],
     ['Matches', d.matches, 'blue'],
-    ['Live now', d.liveMatches, 'blue'],
+    ['Live now', d.liveMatches, d.liveMatches ? 'live' : 'default'],
     ['Submitted', d.submittedMatches, 'gold'],
     ['Rating events', d.ratingEvents, 'gold'],
-    ['Audit entries', d.auditEntries, 'violet'],
+    ['Audit entries', d.auditEntries, 'default'],
   ];
   return (
     <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -69,7 +64,7 @@ function UserRow({ u, self }) {
     setBusy(true);
     try {
       await adminApi.setRole(u.id, role, reason.trim() || undefined);
-      toast(`${u.name} is now ${ROLE_LABELS[role] || role}`, { tone: 'success', icon: '🛡️' });
+      toast(`${u.name} is now ${ROLE_LABELS[role] || role}`, { tone: 'success' });
       setReason('');
       invalidate('admin-users', 'admin-audit', 'admin-overview');
     } catch (err) {
@@ -80,39 +75,41 @@ function UserRow({ u, self }) {
   }
 
   return (
-    <tr className="border-t border-border-default align-middle">
-      <td className="px-3 py-2">
-        <Link to={`/p/${u.id}`} className="flex min-h-[44px] items-center gap-3 hover:text-accent-400">
+    <tr>
+      <Td sticky>
+        <Link to={`/p/${u.id}`} className="flex min-h-11 items-center gap-3 hover:text-accent-400">
           <Avatar src={u.photo_url} name={u.name} size="sm" />
-          <span>
-            <span className="block font-semibold">{u.name}</span>
+          <span className="min-w-0">
+            <span className="block truncate font-semibold">{u.name}</span>
             <span className="block text-xs text-text-muted">
               #{u.id} · joined {formatDateTime(u.created_at)}
             </span>
           </span>
         </Link>
-      </td>
-      <td className="px-3 py-2 text-text-secondary">{u.email}</td>
-      <td className="px-3 py-2 tabular-nums text-text-secondary">{u.elo ?? '—'}</td>
-      <td className="px-3 py-2">
+      </Td>
+      <Td muted>{u.email}</Td>
+      <Td num muted>
+        {u.elo ?? '—'}
+      </Td>
+      <Td>
         <label className="sr-only" htmlFor={`role-${u.id}`}>
           Role for {u.name}
         </label>
-        <select id={`role-${u.id}`} className={`${inputClass} mt-0 min-w-[130px]`} value={u.role} onChange={(e) => changeRole(e.target.value)} disabled={busy || self}>
+        <select id={`role-${u.id}`} className={`${inputClass} min-w-[130px]`} value={u.role} onChange={(e) => changeRole(e.target.value)} disabled={busy || self}>
           {ROLES.map((r) => (
             <option key={r} value={r}>
               {ROLE_LABELS[r]}
             </option>
           ))}
         </select>
-        {self ? <span className="mt-1 block text-[11px] text-text-muted">You cannot change your own role</span> : null}
-      </td>
-      <td className="px-3 py-2">
+        {self ? <span className="mt-1 block text-2xs text-text-muted">You cannot change your own role</span> : null}
+      </Td>
+      <Td>
         <label className="sr-only" htmlFor={`reason-${u.id}`}>
           Reason for changing {u.name}'s role
         </label>
-        <input id={`reason-${u.id}`} className={`${inputClass} mt-0 min-w-[180px]`} placeholder="Reason (optional)" value={reason} onChange={(e) => setReason(e.target.value)} disabled={busy || self} />
-      </td>
+        <input id={`reason-${u.id}`} className={`${inputClass} min-w-[180px]`} placeholder="Reason (optional)" value={reason} onChange={(e) => setReason(e.target.value)} disabled={busy || self} />
+      </Td>
     </tr>
   );
 }
@@ -129,21 +126,21 @@ function UsersTab() {
         <Field label="Search users" placeholder="Name or email" value={search} onChange={(e) => setSearch(e.target.value)} type="search" hint="Changing a role is audited. Add a reason so the log explains itself." />
       </div>
       {users.isLoading ? (
-        <LoadingBlock label="Loading users…" />
+        <LoadingBlock label="Loading users…" variant="table" />
       ) : users.isError ? (
         <ErrorBlock error={users.error} retry={() => users.refetch()} />
       ) : !users.data?.length ? (
-        <EmptyState icon="👤" headline="No users found" copy={q ? `Nothing matches “${q}”.` : 'No accounts yet.'} />
+        <EmptyState icon="users" headline="No users found" copy={q ? `Nothing matches “${q}”.` : 'No accounts yet.'} />
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-border-default">
-          <table className="w-full min-w-[820px] text-sm">
-            <thead className="bg-bg-surface text-left text-[11px] uppercase tracking-wider text-text-muted">
+        <TableWrap>
+          <Table caption="Users and roles" minWidth={820}>
+            <thead>
               <tr>
-                <th className="px-3 py-2">User</th>
-                <th className="px-3 py-2">Email</th>
-                <th className="px-3 py-2">Rating</th>
-                <th className="px-3 py-2">Role</th>
-                <th className="px-3 py-2">Reason</th>
+                <Th sticky>User</Th>
+                <Th>Email</Th>
+                <Th num>Rating</Th>
+                <Th>Role</Th>
+                <Th>Reason</Th>
               </tr>
             </thead>
             <tbody>
@@ -151,8 +148,8 @@ function UsersTab() {
                 <UserRow key={u.id} u={u} self={me && Number(me.id) === Number(u.id)} />
               ))}
             </tbody>
-          </table>
-        </div>
+          </Table>
+        </TableWrap>
       )}
     </div>
   );
@@ -162,59 +159,61 @@ function UsersTab() {
 
 function MatchesTab() {
   const q = useAdminMatches();
-  if (q.isLoading) return <LoadingBlock label="Loading matches…" />;
+  if (q.isLoading) return <LoadingBlock label="Loading matches…" variant="table" />;
   if (q.isError) return <ErrorBlock error={q.error} retry={() => q.refetch()} />;
-  if (!q.data?.length) return <EmptyState icon="🏐" headline="No matches yet" copy="Matches appear here as soon as a scorer or organizer creates one." />;
+  if (!q.data?.length) return <EmptyState icon="ball" headline="No matches yet" copy="Matches appear here as soon as a scorer or organizer creates one." />;
   return (
-    <div className="overflow-x-auto rounded-xl border border-border-default">
-      <table className="w-full min-w-[860px] text-sm">
-        <thead className="bg-bg-surface text-left text-[11px] uppercase tracking-wider text-text-muted">
+    <TableWrap>
+      <Table caption="All matches" minWidth={880}>
+        <thead>
           <tr>
-            <th className="px-3 py-2">ID</th>
-            <th className="px-3 py-2">Status</th>
-            <th className="px-3 py-2">Teams</th>
-            <th className="px-3 py-2 text-center">Sets</th>
-            <th className="px-3 py-2">Tournament</th>
-            <th className="px-3 py-2">Scorer</th>
-            <th className="px-3 py-2 text-right">Last seq</th>
-            <th className="px-3 py-2">When</th>
-            <th className="px-3 py-2 text-right">Open</th>
+            <Th>ID</Th>
+            <Th>Status</Th>
+            <Th sticky>Teams</Th>
+            <Th num>Sets</Th>
+            <Th>Tournament</Th>
+            <Th>Scorer</Th>
+            <Th num>Last seq</Th>
+            <Th>When</Th>
+            <Th className="text-right">Open</Th>
           </tr>
         </thead>
         <tbody>
           {q.data.map((m) => (
-            <tr key={m.id} className="border-t border-border-default">
-              <td className="px-3 py-2 font-mono text-text-muted">#{m.id}</td>
-              <td className="px-3 py-2">
+            <tr key={m.id}>
+              <Td className="font-mono text-text-muted">#{m.id}</Td>
+              <Td>
                 <MatchStatusPill status={m.status} />
-              </td>
-              <td className="px-3 py-2 font-semibold">
-                <span className="text-team-a">{m.team_a_name || 'TBD'}</span> <span className="text-text-muted">vs</span> <span className="text-team-b">{m.team_b_name || 'TBD'}</span>
-              </td>
-              <td className="px-3 py-2 text-center font-mono tabular-nums">
+              </Td>
+              <Td sticky className="font-display text-base font-bold uppercase tracking-wide">
+                <span className="text-team-a">{m.team_a_name || 'TBD'}</span> <span className="text-xs text-text-muted">vs</span> <span className="text-team-b">{m.team_b_name || 'TBD'}</span>
+              </Td>
+              <Td num className="font-display text-base font-bold">
                 {m.sets_a ?? 0}–{m.sets_b ?? 0}
-              </td>
-              <td className="px-3 py-2 text-text-secondary">{m.tournament_name || '—'}</td>
-              <td className="px-3 py-2 text-text-secondary">{m.scorer_name || '—'}</td>
-              <td className="px-3 py-2 text-right font-mono tabular-nums text-text-secondary">{m.last_seq ?? 0}</td>
-              <td className="px-3 py-2 text-text-muted">{formatDateTime(m.submitted_at || m.scheduled_at) || '—'}</td>
-              <td className="px-3 py-2">
+              </Td>
+              <Td muted>{m.tournament_name || '—'}</Td>
+              <Td muted>{m.scorer_name || '—'}</Td>
+              <Td num muted className="font-mono">
+                {m.last_seq ?? 0}
+              </Td>
+              <Td className="text-text-muted">{formatDateTime(m.submitted_at || m.scheduled_at) || '—'}</Td>
+              <Td>
                 <div className="flex justify-end gap-1">
-                  <Link to={`/matches/${m.id}`} className="inline-flex min-h-[40px] items-center rounded-lg border border-border-strong px-3 font-semibold hover:bg-bg-elevated">
+                  <Button to={`/matches/${m.id}`} size="sm" variant="secondary">
                     View
-                  </Link>
+                  </Button>
                   {m.status !== 'submitted' && m.status !== 'cancelled' ? (
-                    <Link to={`/score/${m.id}`} className="inline-flex min-h-[40px] items-center rounded-lg bg-accent-500 px-3 font-semibold text-white hover:bg-accent-400">
+                    <Button to={`/score/${m.id}`} size="sm">
                       Score
-                    </Link>
+                    </Button>
                   ) : null}
                 </div>
-              </td>
+              </Td>
             </tr>
           ))}
         </tbody>
-      </table>
-    </div>
+      </Table>
+    </TableWrap>
   );
 }
 
@@ -227,30 +226,30 @@ function AuditRow({ e }) {
   const hasDiff = e.before != null || e.after != null;
   return (
     <>
-      <tr className="border-t border-border-default">
-        <td className="whitespace-nowrap px-3 py-2 text-text-muted">{formatDateTime(e.created_at)}</td>
-        <td className="px-3 py-2">{e.actor_name || <span className="text-text-muted">system</span>}</td>
-        <td className="px-3 py-2 font-mono text-xs">
+      <tr>
+        <Td className="whitespace-nowrap text-text-muted">{formatDateTime(e.created_at)}</Td>
+        <Td>{e.actor_name || <span className="text-text-muted">system</span>}</Td>
+        <Td className="font-mono text-xs">
           {e.entity}
           <span className="text-text-muted">/</span>
           {e.entity_id}
-        </td>
-        <td className="px-3 py-2">
+        </Td>
+        <Td>
           <span className="rounded-md bg-bg-elevated px-2 py-0.5 font-mono text-xs font-semibold">{e.action}</span>
-        </td>
-        <td className="max-w-[260px] truncate px-3 py-2 text-text-secondary" title={e.reason || ''}>
+        </Td>
+        <Td muted className="max-w-[260px] truncate" title={e.reason || ''}>
           {e.reason || '—'}
-        </td>
-        <td className="px-3 py-2 text-right">
+        </Td>
+        <Td className="text-right">
           {hasDiff ? (
-            <button type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open} className="min-h-[40px] rounded-lg border border-border-strong px-3 text-xs font-semibold hover:bg-bg-elevated">
+            <Button size="sm" variant="secondary" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
               {open ? 'Hide' : 'Diff'}
-            </button>
+            </Button>
           ) : null}
-        </td>
+        </Td>
       </tr>
       {open ? (
-        <tr className="border-t border-border-default bg-bg-surface">
+        <tr className="bg-bg-surface">
           <td colSpan={6} className="px-3 py-3">
             <div className="grid gap-3 md:grid-cols-2">
               {[
@@ -258,8 +257,8 @@ function AuditRow({ e }) {
                 ['After', e.after],
               ].map(([label, value]) => (
                 <div key={label}>
-                  <div className="mb-1 text-[11px] font-black uppercase tracking-wider text-text-muted">{label}</div>
-                  <pre className="max-h-64 overflow-auto rounded-lg border border-border-default bg-bg-page p-3 font-mono text-xs text-text-secondary">{value == null ? 'null' : JSON.stringify(value, null, 2)}</pre>
+                  <div className="eyebrow mb-1">{label}</div>
+                  <pre className="max-h-64 overflow-auto rounded-md border border-border-default bg-bg-page p-3 font-mono text-xs text-text-secondary">{value == null ? 'null' : JSON.stringify(value, null, 2)}</pre>
                 </div>
               ))}
             </div>
@@ -300,22 +299,22 @@ function AuditTab() {
         </Field>
       </div>
       {q.isLoading ? (
-        <LoadingBlock label="Loading audit log…" />
+        <LoadingBlock label="Loading audit log…" variant="table" />
       ) : q.isError ? (
         <ErrorBlock error={q.error} retry={() => q.refetch()} />
       ) : !q.data?.length ? (
-        <EmptyState icon="🧾" headline="No audit entries" copy="Scoring, rating and admin changes are recorded here with before/after state." />
+        <EmptyState icon="shield" headline="No audit entries" copy="Scoring, rating and admin changes are recorded here with before/after state." />
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-border-default">
-          <table className="w-full min-w-[760px] text-sm">
-            <thead className="bg-bg-surface text-left text-[11px] uppercase tracking-wider text-text-muted">
+        <TableWrap>
+          <Table caption="Audit log" minWidth={760}>
+            <thead>
               <tr>
-                <th className="px-3 py-2">Time</th>
-                <th className="px-3 py-2">Actor</th>
-                <th className="px-3 py-2">Entity</th>
-                <th className="px-3 py-2">Action</th>
-                <th className="px-3 py-2">Reason</th>
-                <th className="px-3 py-2 text-right">Before / after</th>
+                <Th>Time</Th>
+                <Th>Actor</Th>
+                <Th>Entity</Th>
+                <Th>Action</Th>
+                <Th>Reason</Th>
+                <Th className="text-right">Before / after</Th>
               </tr>
             </thead>
             <tbody>
@@ -323,8 +322,8 @@ function AuditTab() {
                 <AuditRow key={e.id} e={e} />
               ))}
             </tbody>
-          </table>
-        </div>
+          </Table>
+        </TableWrap>
       )}
     </div>
   );
@@ -334,11 +333,23 @@ function AuditTab() {
 
 export default function Admin() {
   const [tab, setTab] = useState('users');
+  const tabsId = 'admin-tabs';
   return (
-    <PageShell title="Admin" subtitle="Platform overview, roles and the audit trail." wide>
+    <PageShell
+      title="Admin"
+      subtitle="Platform overview, roles and the audit trail."
+      wide
+      eyebrow={
+        <span className="eyebrow inline-flex items-center gap-1.5">
+          <Icon name="shield" size={14} /> Platform administration
+        </span>
+      }
+    >
       <Overview />
-      <Tabs tabs={TABS} value={tab} onChange={setTab} className="mb-5 mt-8" />
-      {tab === 'users' ? <UsersTab /> : tab === 'matches' ? <MatchesTab /> : <AuditTab />}
+      <Tabs id={tabsId} label="Admin sections" tabs={TABS} value={tab} onChange={setTab} className="mb-5 mt-8" />
+      <TabPanel id={tabsId} value={tab}>
+        {tab === 'users' ? <UsersTab /> : tab === 'matches' ? <MatchesTab /> : <AuditTab />}
+      </TabPanel>
     </PageShell>
   );
 }
