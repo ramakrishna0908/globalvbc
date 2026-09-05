@@ -131,7 +131,8 @@ async function run() {
   await query(`UPDATE users SET role = 'admin' WHERE id = $1`, [admin.id]); // register() rejects admin by design
   admin.role = 'admin';
   // The platform superadmin is never a demo account: keep it across re-seeds.
-  const superadmin = await ensureSuperadmin({ password: process.env.SUPERADMIN_PASSWORD || 'volleyball123' });
+  // No default password: use SUPERADMIN_PASSWORD or a generated one (printed once).
+  const superadmin = await ensureSuperadmin({ password: process.env.SUPERADMIN_PASSWORD });
   console.log(`  staff: organizer #${organizer.id}, scorers #${sam.id}/#${jess.id}, coach #${cara.id}, admin #${admin.id}`);
 
   // ---- legacy players + self-reported match reports ------------------------
@@ -324,7 +325,7 @@ Demo accounts (password: ${PASSWORD})
   scorer     jess.scorer@globalvbc.demo     (#${jess.id})  — live final ("Resume")
   coach      cara.coach@globalvbc.demo      (#${cara.id})  — ${TEAM_NAMES.slice(0, 4).join(', ')}
   admin      admin@globalvbc.demo           (#${admin.id})
-  superadmin ${superadmin.email}      (#${superadmin.id}) — password from SUPERADMIN_PASSWORD (local default volleyball123)
+  superadmin ${superadmin.email}      (#${superadmin.id})${superadmin.password ? ` — generated password: ${superadmin.password}` : ' — password unchanged'}
   players    sarah.spiker@globalvbc.demo, mike.setter@globalvbc.demo … (legacy 12 + ${Object.values(rosters).flat().length - legacy.length} roster players)
 
 Tournaments
