@@ -168,9 +168,15 @@ export async function createMatch(userId, role, body) {
   return getMatch(rows[0].id);
 }
 
-export async function listMatches({ scorer, tournament, division, team, status, limit = 50, offset = 0, userId } = {}) {
+export async function listMatches({ scorer, tournament, division, team, player, status, limit = 50, offset = 0, userId } = {}) {
   const params = [];
   const where = [];
+  if (player) {
+    // matches involving any team the player belongs to (or is in a lineup for)
+    params.push(num(player));
+    where.push(`(EXISTS (SELECT 1 FROM team_members tm WHERE tm.user_id = $${params.length} AND tm.team_id IN (m.team_a_id, m.team_b_id))
+      OR EXISTS (SELECT 1 FROM match_lineups l WHERE l.match_id = m.id AND l.user_id = $${params.length}))`);
+  }
   if (scorer === 'me' && userId) {
     params.push(userId);
     where.push(`(m.scorer_id = $${params.length} OR (m.scorer_id IS NULL AND m.created_by = $${params.length}))`);
