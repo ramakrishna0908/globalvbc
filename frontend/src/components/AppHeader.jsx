@@ -32,7 +32,7 @@ export default function AppHeader({ right }) {
     <header className="sticky top-0 z-30 border-b border-border-default bg-bg-page/85 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-2.5">
         <div className="flex items-center gap-5">
-          <Link to="/" className="flex items-center gap-2" aria-label="GlobalVBC home">
+          <Link to="/" className="flex min-h-[44px] items-center gap-2" aria-label="GlobalVBC home">
             <span className="text-2xl" aria-hidden="true">🏐</span>
             <span className="font-display text-xl font-bold text-brand-500">GlobalVBC</span>
           </Link>
