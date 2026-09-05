@@ -66,7 +66,8 @@ npm install
 npm run dev                     # app on :5173 (proxies /api → :4000)
 ```
 
-Demo accounts after `npm run seed` (password `volleyball123`):
+Demo accounts after `npm run seed` (password `volleyball123`, or set `SEED_DEMO_PASSWORD`; the
+superadmin password comes from `SUPERADMIN_PASSWORD` or is generated and printed once):
 `ola.organizer@globalvbc.demo` (organizer) · `sam.scorer@globalvbc.demo` / `jess.scorer@globalvbc.demo` (scorers) ·
 `cara.coach@globalvbc.demo` (coach) · `admin@globalvbc.demo` (admin) · `sarah.spiker@globalvbc.demo` (player).
 

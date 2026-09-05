@@ -16,7 +16,9 @@ import { createMatch, listMatches, getMatch, updateMatch, setLineups, startMatch
 import { deriveState } from '../shared/engine/index.js';
 import { rng, shuffle, nameFactory, emailFor, avatarFor, localDate, EventFactory, planSets, simulateMatch } from './seed-helpers.js';
 
-const PASSWORD = 'volleyball123';
+// Demo accounts share one password so the demo world is easy to explore.
+// Override with SEED_DEMO_PASSWORD when seeding anything internet-facing.
+const PASSWORD = process.env.SEED_DEMO_PASSWORD || 'volleyball123';
 const OPPONENTS = ['Tigers', 'Eagles', 'Sharks', 'Falcons', 'Wolves', 'Panthers', 'Hawks'];
 
 // Legacy self-reporting players (old dashboard, badges, "sample" profile).
