@@ -56,14 +56,47 @@ async function loadContext(client, userId) {
   const { rows: s } = await db.query('SELECT mvp_count FROM skill_stats WHERE user_id = $1', [
     userId,
   ]);
-  const { rows: matches } = await db.query('SELECT * FROM matches WHERE user_id = $1', [userId]);
+  const { rows: matches } = await db.query('SELECT * FROM player_match_reports WHERE user_id = $1', [userId]);
   return { matches, winStreak: u[0]?.win_streak ?? 0, mvpCount: s[0]?.mvp_count ?? 0 };
+}
+
+/**
+ * Career totals from officially scored matches (player_match_stats). These feed
+ * the scored-match badges (aces, blocks, assists, digs, tournament wins…).
+ */
+export async function scoredMetrics(client, userId) {
+  const db = client || pool;
+  const { rows } = await db.query(
+    `SELECT COUNT(*)::int AS scored_matches,
+            COUNT(*) FILTER (WHERE won)::int AS scored_wins,
+            COALESCE(SUM(points),0)::int AS points, COALESCE(SUM(kills),0)::int AS kills,
+            COALESCE(SUM(aces),0)::int AS aces, COALESCE(SUM(blocks),0)::int AS blocks,
+            COALESCE(SUM(block_assists),0)::int AS block_assists, COALESCE(SUM(digs),0)::int AS digs,
+            COALESCE(SUM(assists),0)::int AS assists, COALESCE(SUM(errors),0)::int AS errors
+     FROM player_match_stats WHERE user_id = $1`,
+    [userId]
+  );
+  const { rows: perT } = await db.query(
+    `SELECT COALESCE(MAX(c),0)::int AS max_matches_in_tournament FROM (
+       SELECT COUNT(*) AS c FROM player_match_stats pms JOIN matches m ON m.id = pms.match_id
+       WHERE pms.user_id = $1 AND m.tournament_id IS NOT NULL GROUP BY m.tournament_id) x`,
+    [userId]
+  );
+  const { rows: champs } = await db.query(
+    `SELECT COUNT(DISTINCT m.tournament_id)::int AS tournament_wins
+     FROM matches m JOIN match_lineups l ON l.match_id = m.id
+     WHERE l.user_id = $1 AND m.status = 'submitted' AND m.bracket_type = 'final'
+       AND m.winner_team_id = l.team_id`,
+    [userId]
+  );
+  return { ...rows[0], ...perT[0], ...champs[0] };
 }
 
 /** Metrics for the badge engine, computed on the in-transaction client. */
 export async function metricsForUser(client, userId) {
   const ctx = await loadContext(client, userId);
-  return computeMetrics(ctx.matches, ctx);
+  const scored = await scoredMetrics(client, userId);
+  return { ...computeMetrics(ctx.matches, ctx), ...scored };
 }
 
 /** Full /stats payload: skill metrics + trend series. */

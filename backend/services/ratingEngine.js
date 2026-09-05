@@ -43,7 +43,7 @@ export async function recordMatch(userId, body) {
     const newStreak = isWin ? user.win_streak + 1 : 0;
 
     const { rows: matchRows } = await client.query(
-      `INSERT INTO matches
+      `INSERT INTO player_match_reports
         (user_id, opponent_name, result, score_for, score_against, played_at,
          elo_before, elo_after, elo_delta, is_mvp)
        VALUES ($1,$2,$3,$4,$5, COALESCE($6, CURRENT_DATE), $7,$8,$9,$10)
@@ -99,7 +99,7 @@ export async function recordMatch(userId, body) {
 
 export async function listMatches(userId, { limit = 20, offset = 0 } = {}) {
   const { rows } = await pool.query(
-    `SELECT * FROM matches WHERE user_id = $1
+    `SELECT * FROM player_match_reports WHERE user_id = $1
      ORDER BY played_at DESC, id DESC
      LIMIT $2 OFFSET $3`,
     [userId, Math.min(Number(limit) || 20, 100), Number(offset) || 0]

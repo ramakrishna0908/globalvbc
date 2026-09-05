@@ -13,8 +13,8 @@ export const profileApi = {
 };
 
 export const matchesApi = {
-  list: (params) => api.get('/matches', { params }).then((r) => r.data.matches),
-  create: (body) => api.post('/matches', body).then((r) => r.data),
+  list: (params) => api.get('/match-reports', { params }).then((r) => r.data.matches),
+  create: (body) => api.post('/match-reports', body).then((r) => r.data),
 };
 
 export const statsApi = {

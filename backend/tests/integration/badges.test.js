@@ -11,7 +11,7 @@ async function newPlayer(email) {
   return res.body.token;
 }
 const auth = (t) => ({ Authorization: `Bearer ${t}` });
-const post = (t, body) => request(app).post('/api/matches').set(auth(t)).send(body);
+const post = (t, body) => request(app).post('/api/match-reports').set(auth(t)).send(body);
 
 const keys = (badges) => badges.map((b) => b.key);
 
@@ -57,7 +57,7 @@ describe('badges & stats', () => {
     await post(t, { opponent_name: 'A', result: 'won', score_for: 21, score_against: 10 });
     const res = await request(app).get('/api/badges').set(auth(t));
     expect(res.status).toBe(200);
-    expect(res.body.badges).toHaveLength(5);
+    expect(res.body.badges).toHaveLength(12);
     const rs = res.body.badges.find((b) => b.key === 'rising_star');
     expect(rs.earned).toBe(true);
     const fav = res.body.badges.find((b) => b.key === 'community_favorite');

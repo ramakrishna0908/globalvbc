@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { register, verifyCredentials, getById } from '../services/auth.js';
+import { register, verifyCredentials, getById, requestPasswordReset, resetPassword } from '../services/auth.js';
 import { signToken, requireAuth } from '../middleware/auth.js';
 import { requireFields } from '../utils/validation.js';
 
@@ -28,6 +28,25 @@ router.post('/login', async (req, res, next) => {
 router.get('/me', requireAuth, async (req, res, next) => {
   try {
     res.json({ user: await getById(req.userId) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/forgot', async (req, res, next) => {
+  try {
+    requireFields(req.body, ['email']);
+    res.json(await requestPasswordReset(req.body.email));
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/reset', async (req, res, next) => {
+  try {
+    requireFields(req.body, ['token', 'password']);
+    const user = await resetPassword(req.body);
+    res.json({ user, token: signToken(user) });
   } catch (err) {
     next(err);
   }

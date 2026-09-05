@@ -1,10 +1,10 @@
 import { query } from '../db.js';
 import { HttpError, POSITIONS } from '../utils/validation.js';
-import { PUBLIC_FIELDS } from './auth.js';
+import { PUBLIC_FIELDS, SELF_SERVICE_ROLES } from './auth.js';
 
 // Public profile omits email (used by shareable card / leaderboard).
 const SHARE_FIELDS =
-  'id, name, photo_url, position, community_id, elo, rating_score, win_streak, profile_complete, created_at';
+  'id, name, photo_url, position, community_id, elo, rating_score, win_streak, profile_complete, role, jersey_number, created_at';
 
 export async function getOwnProfile(userId) {
   const { rows } = await query(`SELECT ${PUBLIC_FIELDS} FROM users WHERE id = $1`, [userId]);
@@ -17,7 +17,7 @@ async function enrich(profile) {
   const { rows: mc } = await query(
     `SELECT COUNT(*)::int AS played,
             COUNT(*) FILTER (WHERE result = 'won')::int AS wins
-     FROM matches WHERE user_id = $1`,
+     FROM player_match_reports WHERE user_id = $1`,
     [profile.id]
   );
   const played = mc[0]?.played ?? 0;
@@ -68,7 +68,7 @@ export async function getPublicProfile(id) {
 }
 
 export async function updateProfile(userId, body) {
-  const allowed = ['name', 'photo_url', 'position', 'community_id'];
+  const allowed = ['name', 'photo_url', 'position', 'community_id', 'role', 'jersey_number'];
   const updates = [];
   const values = [];
   let i = 1;
@@ -77,6 +77,9 @@ export async function updateProfile(userId, body) {
     if (body[key] !== undefined) {
       if (key === 'position' && body[key] !== null && !POSITIONS.includes(body[key])) {
         throw new HttpError(400, `Invalid position. Allowed: ${POSITIONS.join(', ')}`);
+      }
+      if (key === 'role' && !SELF_SERVICE_ROLES.includes(body[key])) {
+        throw new HttpError(400, `Invalid role. Allowed: ${SELF_SERVICE_ROLES.join(', ')}`);
       }
       updates.push(`${key} = $${i++}`);
       values.push(body[key]);

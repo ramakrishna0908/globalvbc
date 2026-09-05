@@ -30,7 +30,7 @@ const PLAYERS = [
 
 async function clearUsers() {
   await query(
-    'TRUNCATE user_badges, rating_history, matches, skill_stats, users RESTART IDENTITY CASCADE'
+    'TRUNCATE notifications, audit_log, rating_events, player_match_stats, match_events, match_lineups, matches, pool_teams, pools, tournament_registrations, divisions, courts, tournaments, venues, team_members, teams, password_resets, user_badges, rating_history, player_match_reports, skill_stats, users RESTART IDENTITY CASCADE'
   );
 }
 

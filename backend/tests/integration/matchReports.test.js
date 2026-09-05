@@ -12,7 +12,7 @@ async function newPlayer(email) {
 }
 
 function post(token, body) {
-  return request(app).post('/api/matches').set('Authorization', `Bearer ${token}`).send(body);
+  return request(app).post('/api/match-reports').set('Authorization', `Bearer ${token}`).send(body);
 }
 
 describe('matches', () => {
@@ -51,7 +51,7 @@ describe('matches', () => {
     const token = await newPlayer('list@vbc.test');
     await post(token, { opponent_name: 'A', result: 'won', score_for: 21, score_against: 12 });
     await post(token, { opponent_name: 'B', result: 'lost', score_for: 15, score_against: 21 });
-    const res = await request(app).get('/api/matches').set('Authorization', `Bearer ${token}`);
+    const res = await request(app).get('/api/match-reports').set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(200);
     expect(res.body.matches).toHaveLength(2);
   });
