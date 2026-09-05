@@ -54,6 +54,17 @@ export default {
         'status-warning': cssColor('status-warning'),
         'status-active': cssColor('status-active'),
         'status-danger': cssColor('status-danger'),
+        'team-a': cssColor('team-a'),
+        'team-b': cssColor('team-b'),
+      },
+      fontSize: {
+        score: ['clamp(4.5rem, 16vw, 9rem)', { lineHeight: '1', letterSpacing: '-0.02em' }],
+      },
+      keyframes: {
+        'toast-in': { from: { opacity: '0', transform: 'translateY(-8px)' }, to: { opacity: '1', transform: 'translateY(0)' } },
+      },
+      animation: {
+        'toast-in': 'toast-in 160ms ease-out',
       },
       fontFamily: {
         display: ['Playfair Display', 'Georgia', 'serif'],
