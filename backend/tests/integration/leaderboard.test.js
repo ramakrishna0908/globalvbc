@@ -17,7 +17,7 @@ async function setCommunity(token, communityId) {
 }
 async function play(token, result, sf, sa) {
   await request(app)
-    .post('/api/matches')
+    .post('/api/match-reports')
     .set(auth(token))
     .send({ opponent_name: 'X', result, score_for: sf, score_against: sa });
 }

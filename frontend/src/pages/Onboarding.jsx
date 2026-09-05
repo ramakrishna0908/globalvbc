@@ -7,11 +7,13 @@ import RatingBadge from '../components/RatingBadge.jsx';
 import LeaderboardWidget from '../components/dashboard/LeaderboardWidget.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useCommunities, useUpdateProfile, useRecordMatch, useLeaderboard } from '../hooks/queries.js';
-import { POSITION_LABELS } from '../lib/format.js';
+import { POSITION_LABELS, ROLE_LABELS } from '../lib/format.js';
 
 const STEPS = ['Profile', 'Position', 'First Match', 'Rating', 'Rankings', 'Share'];
+/** Roles a user may pick for themselves (admin is granted by an admin). */
+const SELF_SERVICE_ROLES = ['player', 'scorer', 'coach', 'organizer'];
 const field =
-  'mt-1 w-full rounded-lg border border-border-default bg-bg-surface px-3 py-2 text-text-primary focus:border-accent-500';
+  'mt-1 w-full min-h-[44px] rounded-lg border border-border-default bg-bg-surface px-3 py-2 text-text-primary focus:border-accent-500';
 
 function StepDots({ step }) {
   return (
@@ -46,6 +48,8 @@ export default function Onboarding() {
     name: user?.name || '',
     photo_url: user?.photo_url || '',
     community_id: user?.community_id || '',
+    role: SELF_SERVICE_ROLES.includes(user?.role) ? user.role : 'player',
+    jersey_number: user?.jersey_number ?? '',
   });
   const [position, setPosition] = useState(user?.position || '');
   const [match, setMatch] = useState({
@@ -67,6 +71,9 @@ export default function Onboarding() {
       name: profile.name,
       photo_url: profile.photo_url || null,
       community_id: profile.community_id ? Number(profile.community_id) : null,
+      // Admins keep their role; everyone else can pick a self-service role.
+      ...(user?.role === 'admin' ? {} : { role: profile.role }),
+      jersey_number: profile.jersey_number === '' || profile.jersey_number == null ? null : Number(profile.jersey_number),
     });
     setUser(updated);
     next();
@@ -116,6 +123,47 @@ export default function Onboarding() {
                     onChange={(e) => setProfile({ ...profile, photo_url: e.target.value })}
                   />
                 </label>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <label className="block text-sm">
+                    <span className="text-text-secondary">I am a…</span>
+                    <select
+                      className={field}
+                      value={profile.role}
+                      onChange={(e) => setProfile({ ...profile, role: e.target.value })}
+                      disabled={user?.role === 'admin'}
+                      data-testid="role-select"
+                    >
+                      {SELF_SERVICE_ROLES.map((r) => (
+                        <option key={r} value={r}>
+                          {ROLE_LABELS[r]}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="mt-1 block text-xs text-text-muted">
+                      {profile.role === 'scorer'
+                        ? 'Scorers run the live scoring panel for matches.'
+                        : profile.role === 'coach'
+                          ? 'Coaches manage teams and rosters.'
+                          : profile.role === 'organizer'
+                            ? 'Organizers create tournaments and schedules.'
+                            : 'Players build a rating from officially scored matches.'}
+                    </span>
+                  </label>
+                  <label className="block text-sm">
+                    <span className="text-text-secondary">Jersey number (optional)</span>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min="0"
+                      max="99"
+                      className={field}
+                      placeholder="e.g. 7"
+                      value={profile.jersey_number}
+                      onChange={(e) => setProfile({ ...profile, jersey_number: e.target.value })}
+                      data-testid="jersey-input"
+                    />
+                  </label>
+                </div>
                 <label className="block text-sm">
                   <span className="text-text-secondary">Community</span>
                   <select

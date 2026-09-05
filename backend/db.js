@@ -4,7 +4,7 @@ const { Pool } = pg;
 
 // Enable SSL for hosted Postgres (Neon/Supabase). Local dev uses no SSL.
 const useSsl =
-  /\bsslmode=require\b/.test(process.env.DATABASE_URL || '') ||
+  /\bsslmode=require\b/.test(process.env.DATABASE_URL || process.env.POSTGRES_URL || '') ||
   process.env.PGSSL === 'true' ||
   Boolean(process.env.VERCEL);
 
@@ -18,8 +18,19 @@ const sslConfig = () => {
   return true;
 };
 
+// DATABASE_URL is the canonical setting; POSTGRES_URL is what the Vercel
+// Marketplace Postgres integrations (Supabase/Neon) provision automatically.
+let connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+
+// pg ≥ 8.13 treats `sslmode=` in the URL as authoritative and ignores the
+// `ssl` option; when the operator explicitly opted out of chain verification
+// (custom-CA poolers) drop the URL parameter so the `ssl` object below applies.
+if (connectionString && process.env.DB_SSL_NO_VERIFY === 'true') {
+  connectionString = connectionString.replace(/([?&])sslmode=[^&]*&?/, '$1').replace(/[?&]$/, '');
+}
+
 export const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString,
   // Keep the pool tiny on serverless — each function instance gets its own.
   max: process.env.VERCEL ? 1 : 10,
   ssl: sslConfig(),
